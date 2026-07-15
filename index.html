@@ -289,6 +289,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 .mz-red{ fill:var(--danger); }
 .mz-robot{ fill:var(--accent); transition: transform var(--step-ms,520ms) cubic-bezier(.4,0,.2,1); transform-box:fill-box; }
 .mz-trail{ fill:none; stroke:var(--accent); stroke-width:2; stroke-dasharray:3 4; opacity:.45; }
+.mz-bfs-route{ fill:none; stroke:var(--accent-2); stroke-width:5; stroke-linecap:round; stroke-linejoin:round; opacity:.78; pointer-events:none; }
 .mz-sense-ring{ fill:none; stroke:var(--accent-2); stroke-width:2; opacity:0; }
 .mz-sense-ring.pulse{ animation:pulseRing .6s ease-out; }
 @keyframes pulseRing{ 0%{ opacity:.9; r:6; } 100%{ opacity:0; r:22; } }
@@ -362,7 +363,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 .spec-card dd{ margin:0; text-align:right; font-family:var(--font-display); font-variant-numeric:tabular-nums; }
 
 /* ---------- simulation slides ---------- */
-.sim-layout{ display:grid; grid-template-columns:1.1fr .9fr; gap:24px; flex:1 1 auto; min-height:0; }
+.sim-layout{ display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); gap:24px; flex:1 1 auto; min-height:0; }
 .sim-stage{ display:flex; flex-direction:column; gap:12px; min-height:0; }
 .sim-canvas{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; flex:1 1 auto; display:flex; align-items:center; justify-content:center; min-height:0; }
 .sim-canvas svg{ width:100%; height:100%; max-height:46vh; }
@@ -373,7 +374,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 .progress-mini{ height:4px; border-radius:2px; background:var(--bg-inset); overflow:hidden; flex:1 1 140px; }
 .progress-mini i{ display:block; height:100%; background:var(--accent); width:0%; transition:width .2s linear; }
 
-.sim-console{ display:flex; flex-direction:column; gap:10px; min-height:0; }
+.sim-console{ display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; overflow:hidden; }
 .state-strip{ display:flex; gap:6px; flex-wrap:wrap; }
 .state-chip{ font-family:var(--font-display); font-size:.62rem; padding:4px 8px; border-radius:6px; border:1px solid var(--line-strong); color:var(--muted-2); background:var(--bg-inset); letter-spacing:.03em; }
 .state-chip.active{ color:var(--accent-ink); background:var(--accent); border-color:var(--accent); font-weight:700; }
@@ -399,7 +400,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 .cam-swatch.verde{ background:var(--ok); box-shadow:0 0 0 4px var(--ok-soft); }
 .cam-swatch.rojo{ background:var(--danger); box-shadow:0 0 0 4px var(--danger-soft); }
 
-.decision-box{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; min-height:88px; }
+.decision-box{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; min-width:0; min-height:88px; overflow:auto; }
 .decision-box table{ font-size:.76rem; }
 .decision-box td, .decision-box th{ padding:4px 8px; }
 .decision-box tr.chosen td{ color:var(--accent); font-weight:700; }
@@ -762,25 +763,25 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
       <div class="slide-head">
         <span class="eyebrow">07 · Flujo lógico</span>
         <h2>Estados del carrito durante el mapeo</h2>
-        <p class="lead">La máquina de estados decide cuándo avanzar, detenerse, verificar la pared y girar.</p>
+        <p class="lead">En cada celda el robot sensa los muros, actualiza el mapa conocido y usa flood fill para escoger el siguiente movimiento.</p>
       </div>
       <div class="doc-layout wide-visual">
         <div class="state-flow">
           <div class="card state-step"><h3>INICIAR</h3><p>Espera LiDAR + odometría e inicia las métricas.</p></div>
           <div class="state-down">↓</div>
-          <div class="card state-step"><h3>AVANZAR_PARALELO</h3><p>Sigue la pared. Apertura izquierda confirmada → gira; tras 0.12 m o frente bloqueado → verifica.</p></div>
+          <div class="card state-step"><h3>PAUSA_CELDA → VALIDANDO_CELDA</h3><p>Se estabiliza, toma cinco lecturas LiDAR y confirma cada muro por consenso.</p></div>
           <div class="state-down">↓</div>
-          <div class="card state-step"><h3>PAUSA_CHEQUEO_PARED · 0.5 s</h3><p>Se detiene, vuelve a leer el LiDAR y elige una salida.</p></div>
+          <div class="card state-step"><h3>DECIDIR · FLOOD FILL</h3><p>Calcula distancias hacia la meta usando los muros conocidos y elige el vecino libre con menor valor.</p></div>
           <div class="state-down">↓ decisión</div>
           <div class="state-decisions">
-            <div class="state-decision"><b>Lado libre</b>GIRAR 90° izquierda</div>
-            <div class="state-decision"><b>Frente bloqueado</b>GIRAR 90° derecha</div>
-            <div class="state-decision"><b>Camino estable</b>seguir avanzando</div>
+            <div class="state-decision"><b>Mismo rumbo</b>AVANZAR una celda</div>
+            <div class="state-decision"><b>Otro rumbo</b>GIRAR 90° o 180°</div>
+            <div class="state-decision"><b>Empate</b>N → E → S → O</div>
           </div>
           <div class="state-down">↓</div>
-          <div class="card state-step"><h3>GIRAR → AVANCE_GIRO_VACIO</h3><p>Completa el giro, avanza 0.10 m si entró a una apertura y vuelve al seguimiento.</p></div>
-          <div class="state-loop">↺ REGRESA A AVANZAR_PARALELO</div>
-          <div class="card state-step"><h3>Interrupciones y eventos</h3><p><b>FRENO_PARE:</b> pausa 5 s y retoma · <b>Recuperación:</b> retrocede/avanza y retoma · <b>META verde:</b> registra la llegada.</p></div>
+          <div class="card state-step"><h3>PAUSA_GIRO → GIRAR → AVANZAR</h3><p>Cierra el giro por yaw absoluto y el avance de 30 cm por odometría corregida.</p></div>
+          <div class="state-loop">↺ SENSAR Y ACTUALIZAR EL MAPA EN LA NUEVA CELDA</div>
+          <div class="card state-step"><h3>FASE B · GARANTÍA</h3><p>Al llegar a META calcula BFS sobre el mapa conocido; si la ruta candidata contiene celdas no sensadas, continúa explorando hasta validarlas.</p></div>
         </div>
         <figure class="doc-media"><img src="img/mapeohastametamasrojos.jpeg" alt="Mapa del recorrido con señales PARE y meta"><figcaption>Flujo del mapeo: inicio, tramos confirmados, eventos PARE y META.</figcaption></figure>
       </div>
@@ -806,22 +807,22 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
     <section class="slide" id="s-best-route">
       <div class="slide-head">
         <span class="eyebrow">09 · Mejor recorrido</span>
-        <h2>BFS y ruta final: cuatro tramos</h2>
-        <p class="lead">BFS obtiene el camino más corto desde A7 hasta META; luego el robot lo ejecuta con LiDAR y odometría.</p>
+        <h2>BFS y ruta final garantizada</h2>
+        <p class="lead">BFS obtiene el camino más corto del mapa validado desde el inicio editable hasta la META y lo comprime en tramos rectos.</p>
       </div>
       <div class="two-col">
         <div class="doc-stack">
-          <div class="card doc-card" style="order:2;"><h3>Ruta obtenida por BFS</h3><p><b>1.</b> Recto 1.02 m<br><b>2.</b> Derecha 90° + 1.02 m<br><b>3.</b> Izquierda 90° + 0.55 m<br><b>4.</b> Derecha 90° + hasta 1.85 m o META verde</p></div>
+          <div class="card doc-card" style="order:2;"><h3>Ruta obtenida por BFS</h3><p>La cola expande el grafo por niveles y guarda el predecesor de cada celda. Al alcanzar META reconstruye el camino más corto; el resultado cambia automáticamente si se editan inicio, meta o muros en la demo.</p></div>
           <div class="card doc-card" style="order:1;"><h3>Lógica general · BFS</h3>
             <div class="bfs-flow">
               <div class="bfs-step"><b>MAPA</b><span>celdas + muros</span></div><i class="bfs-arrow">→</i>
               <div class="bfs-step"><b>GRAFO</b><span>vecinos libres</span></div><i class="bfs-arrow">→</i>
-              <div class="bfs-step"><b>BFS</b><span>cola desde A7</span></div><i class="bfs-arrow">→</i>
+              <div class="bfs-step"><b>BFS</b><span>cola desde inicio</span></div><i class="bfs-arrow">→</i>
               <div class="bfs-step"><b>META</b><span>reconstruir padres</span></div><i class="bfs-arrow">→</i>
-              <div class="bfs-step"><b>4 TRAMOS</b><span>comprimir + calibrar</span></div>
+              <div class="bfs-step"><b>TRAMOS</b><span>comprimir + ejecutar</span></div>
             </div>
           </div>
-          <div class="card doc-card" style="order:3;"><h3>Cómo se ejecuta</h3><p><code>ESPERA_RUTA → SEGUIR_RUTA</code>. El robot reproduce la salida de BFS alternando <b>GIRO</b> y <b>AVANCE</b>.</p></div>
+          <div class="card doc-card" style="order:3;"><h3>Cómo se ejecuta</h3><p>La segunda corrida reproduce los segmentos de BFS alternando <b>GIRO</b> y <b>AVANCE</b>. La demo siguiente muestra tanto la exploración como el speed run recalculados con el mapa editado.</p></div>
           <div class="card doc-card" style="order:4;"><h3>Calibraciones</h3><p>Avance 0.15 m/s · giro 0.06 m/s + 0.60 rad/s · giro objetivo 90° · distancia ×0.9474 · yaw ×0.9899.</p></div>
         </div>
         <figure class="doc-media">
@@ -999,6 +1000,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
           <div class="sim-controls">
             <button class="btn" id="r1-back">⏮</button>
             <button class="btn primary" id="r1-play">▶ Reproducir</button>
+            <button class="btn" id="r1-complete">⏩ Completo</button>
             <button class="btn" id="r1-step">Paso ⏭</button>
             <button class="btn" id="r1-reset">↺ Reiniciar</button>
             <div class="progress-mini"><i id="r1-progress"></i></div>
@@ -1402,8 +1404,12 @@ function drawMarkers(g, opts){
 function renderMapSlide(){
   const svg = document.getElementById('map-svg');
   const { g } = buildBaseMaze(svg, { fog:false, editable:true, onEdgeClick:onMapEdgeClick });
-  drawMarkers(g, { clickable:true, onCellClick: onMapCellClick });
   const opt = bfs(state.start, state.goal, state.walls);
+  if(opt){
+    const points = opt.map(centerSvg).map(([x,y])=>`${x},${y}`).join(' ');
+    g.appendChild(el('polyline', { points, class:'mz-bfs-route' }));
+  }
+  drawMarkers(g, { clickable:true, onCellClick: onMapCellClick });
   document.getElementById('stat-bfs').textContent = opt ? (opt.length-1) : '—';
 }
 function onMapCellClick(c){
@@ -1673,6 +1679,7 @@ function makeSimRunner(cfg){
   const statesEl = document.getElementById(cfg.statesId);
   const progressEl = document.getElementById(cfg.progressId);
   const speedEl = document.getElementById(cfg.speedId);
+  const completeBtn = cfg.completeBtnId ? document.getElementById(cfg.completeBtnId) : null;
 
   const STATES = cfg.states;
   statesEl.innerHTML = STATES.map(s=>`<span class="state-chip" data-s="${s}">${s}</span>`).join('');
@@ -1680,6 +1687,7 @@ function makeSimRunner(cfg){
   let frames = [];
   let idx = -1;
   let timer = null;
+  let playbackMode = null;
   let base = null; // { g, wallEls }
   let robotEl = null, trailEl = null, rayEls = null, senseRingEl = null;
 
@@ -1953,19 +1961,34 @@ function makeSimRunner(cfg){
 
   function play(){
     if(timer) return;
+    playbackMode = 'normal';
     document.getElementById(cfg.playBtnId).textContent = '⏸ Pausa';
     timer = setInterval(()=>{
       if(idx >= frames.length-1){ stop(); return; }
       renderAt(idx+1);
     }, Number(speedEl.value));
   }
+  function playComplete(){
+    if(timer && playbackMode === 'complete'){ stop(); return; }
+    stop();
+    if(idx >= frames.length-1) rebuild();
+    playbackMode = 'complete';
+    completeBtn.textContent = '⏸ Completando';
+    timer = setInterval(()=>{
+      if(idx >= frames.length-1){ stop(); return; }
+      renderAt(idx+1);
+    }, 45);
+  }
   function stop(){
     if(timer){ clearInterval(timer); timer=null; }
+    playbackMode = null;
     document.getElementById(cfg.playBtnId).textContent = '▶ Reproducir';
+    if(completeBtn) completeBtn.textContent = '⏩ Completo';
   }
   function toggle(){ timer ? stop() : play(); }
 
   document.getElementById(cfg.playBtnId).addEventListener('click', toggle);
+  if(completeBtn) completeBtn.addEventListener('click', playComplete);
   document.getElementById(cfg.stepBtnId).addEventListener('click', ()=>{ stop(); renderAt(idx+1); });
   document.getElementById(cfg.backBtnId).addEventListener('click', ()=>{ stop(); renderAt(idx-1); });
   document.getElementById(cfg.resetBtnId).addEventListener('click', ()=>{ rebuild(); });
@@ -1978,7 +2001,7 @@ const STATES_R2 = ['INICIO','DECIDIR_SEGMENTO','PAUSA_GIRO','GIRAR','AVANZAR','T
 
 const run1 = makeSimRunner({
   svgId:'run1-svg', sensorsId:'r1-sensors', decisionId:'r1-decision', logId:'r1-log', statesId:'r1-states',
-  playBtnId:'r1-play', stepBtnId:'r1-step', backBtnId:'r1-back', resetBtnId:'r1-reset', speedId:'r1-speed', progressId:'r1-progress',
+  playBtnId:'r1-play', completeBtnId:'r1-complete', stepBtnId:'r1-step', backBtnId:'r1-back', resetBtnId:'r1-reset', speedId:'r1-speed', progressId:'r1-progress',
   fog:true, states: STATES_R1,
   buildFn: ()=> buildExplorerTimeline(state.start, state.goal, state.reds)
 });
