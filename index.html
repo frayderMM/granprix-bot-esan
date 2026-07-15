@@ -1,0 +1,1524 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reto Final — Resolviendo el Laberinto</title>
+<style>
+:root{
+  --bg:#0a1220;
+  --bg-panel:#0f1b30;
+  --bg-panel-2:#122140;
+  --bg-inset:#0c1729;
+  --ink:#eaf0fb;
+  --muted:#8ea0c4;
+  --muted-2:#5f759e;
+  --line: rgba(146,168,214,0.16);
+  --line-strong: rgba(146,168,214,0.32);
+  --accent:#45d9c4;
+  --accent-ink:#03211d;
+  --accent-soft: rgba(69,217,196,0.14);
+  --accent-2:#f2b544;
+  --accent-2-soft: rgba(242,181,68,0.14);
+  --ok:#4ade80;
+  --ok-soft: rgba(74,222,128,0.16);
+  --danger:#f8717a;
+  --danger-soft: rgba(248,113,122,0.16);
+  --wall:#c7d4ef;
+  --wall-dim: rgba(199,212,239,0.14);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font-display: ui-monospace,"Cascadia Code","JetBrains Mono",Consolas,"SFMono-Regular",Menlo,monospace;
+  --font-body: "Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f2f4fa;
+    --bg-panel:#ffffff;
+    --bg-panel-2:#f7f9fd;
+    --bg-inset:#eef1f9;
+    --ink:#101a2e;
+    --muted:#51628a;
+    --muted-2:#8494b8;
+    --line: rgba(16,26,46,0.10);
+    --line-strong: rgba(16,26,46,0.22);
+    --accent:#0e9488;
+    --accent-ink:#eafff9;
+    --accent-soft: rgba(14,148,136,0.10);
+    --accent-2:#a8660a;
+    --accent-2-soft: rgba(168,102,10,0.10);
+    --ok:#178a4c;
+    --ok-soft: rgba(23,138,76,0.10);
+    --danger:#c23b46;
+    --danger-soft: rgba(194,59,70,0.10);
+    --wall:#1b2947;
+    --wall-dim: rgba(27,41,71,0.16);
+    --shadow: 0 20px 50px -24px rgba(16,26,46,0.28);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a1220; --bg-panel:#0f1b30; --bg-panel-2:#122140; --bg-inset:#0c1729;
+  --ink:#eaf0fb; --muted:#8ea0c4; --muted-2:#5f759e;
+  --line: rgba(146,168,214,0.16); --line-strong: rgba(146,168,214,0.32);
+  --accent:#45d9c4; --accent-ink:#03211d; --accent-soft: rgba(69,217,196,0.14);
+  --accent-2:#f2b544; --accent-2-soft: rgba(242,181,68,0.14);
+  --ok:#4ade80; --ok-soft: rgba(74,222,128,0.16);
+  --danger:#f8717a; --danger-soft: rgba(248,113,122,0.16);
+  --wall:#c7d4ef; --wall-dim: rgba(199,212,239,0.14);
+  --shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+}
+:root[data-theme="light"]{
+  --bg:#f2f4fa; --bg-panel:#ffffff; --bg-panel-2:#f7f9fd; --bg-inset:#eef1f9;
+  --ink:#101a2e; --muted:#51628a; --muted-2:#8494b8;
+  --line: rgba(16,26,46,0.10); --line-strong: rgba(16,26,46,0.22);
+  --accent:#0e9488; --accent-ink:#eafff9; --accent-soft: rgba(14,148,136,0.10);
+  --accent-2:#a8660a; --accent-2-soft: rgba(168,102,10,0.10);
+  --ok:#178a4c; --ok-soft: rgba(23,138,76,0.10);
+  --danger:#c23b46; --danger-soft: rgba(194,59,70,0.10);
+  --wall:#1b2947; --wall-dim: rgba(27,41,71,0.16);
+  --shadow: 0 20px 50px -24px rgba(16,26,46,0.28);
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%; overflow:hidden;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-size:16px; line-height:1.5;
+}
+::selection{ background:var(--accent); color:var(--accent-ink); }
+
+.eyebrow{
+  font-family:var(--font-display); font-size:0.72rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--accent); font-weight:600;
+}
+h1,h2,h3{ text-wrap:balance; margin:0; font-weight:700; }
+h1{ font-size:clamp(2rem,4.4vw,3.4rem); letter-spacing:-0.01em; }
+h2{ font-size:clamp(1.35rem,2.6vw,1.9rem); letter-spacing:-0.005em; }
+h3{ font-size:1.02rem; }
+p{ margin:0; }
+.muted{ color:var(--muted); }
+.mono{ font-family:var(--font-display); font-variant-numeric:tabular-nums; }
+
+/* ---------- deck shell ---------- */
+.deck{ position:relative; height:100vh; width:100vw; }
+.slides{ position:relative; height:100%; width:100%; }
+.slide{
+  position:absolute; inset:0; padding:44px clamp(24px,4.6vw,88px) 80px;
+  display:flex; flex-direction:column; justify-content:center; gap:18px;
+  opacity:0; visibility:hidden; transform:translateY(10px);
+  transition:opacity .38s ease, transform .38s ease;
+  pointer-events:none; overflow-y:auto;
+}
+.slide.active{ opacity:1; visibility:visible; transform:translateY(0); pointer-events:auto; }
+
+.slide-head{ display:flex; flex-direction:column; gap:8px; flex:0 0 auto; }
+.slide-head .kicker-row{ display:flex; align-items:center; gap:12px; }
+.slide-num{ font-family:var(--font-display); color:var(--muted-2); font-size:.78rem; }
+
+/* ---------- topbar / nav ---------- */
+.topbar{
+  position:fixed; top:0; left:0; right:0; height:44px; z-index:40;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px; font-family:var(--font-display); font-size:.72rem;
+  color:var(--muted-2); letter-spacing:.06em; pointer-events:none;
+}
+.topbar .brand{ display:flex; align-items:center; gap:8px; }
+.topbar .brand .dot{ width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+
+.navbar{
+  position:fixed; left:0; right:0; bottom:0; height:64px; z-index:40;
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  padding:0 22px;
+}
+.navbar .track{
+  display:flex; align-items:center; gap:16px; background:var(--bg-panel);
+  border:1px solid var(--line); border-radius:999px; padding:8px 10px 8px 18px;
+  box-shadow:var(--shadow);
+}
+.navbar .title{ font-size:.78rem; color:var(--muted); min-width:150px; }
+.navbtn{
+  appearance:none; border:1px solid var(--line-strong); background:var(--bg-inset); color:var(--ink);
+  width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center; transition:background .15s, transform .1s;
+}
+.navbtn:hover{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+.navbtn:active{ transform:scale(.94); }
+.dots{ display:flex; gap:7px; }
+.dots button{
+  width:7px; height:7px; border-radius:50%; border:none; padding:0; cursor:pointer;
+  background:var(--line-strong);
+}
+.dots button.active{ background:var(--accent); width:20px; border-radius:4px; }
+.progress{ position:fixed; top:0; left:0; height:2px; background:var(--accent); z-index:50; transition:width .35s ease; }
+
+/* ---------- generic building blocks ---------- */
+.card{
+  background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px 20px;
+}
+.grid-cards{ display:grid; gap:14px; }
+.chip{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--font-display);
+  font-size:.7rem; letter-spacing:.04em; padding:4px 10px; border-radius:999px;
+  border:1px solid var(--line-strong); color:var(--muted); background:var(--bg-inset);
+  text-transform:uppercase;
+}
+.chip.on{ color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+.chip.amber{ color:var(--accent-2); border-color: color-mix(in srgb, var(--accent-2) 50%, transparent); background:var(--accent-2-soft); }
+.chip.ok{ color:var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); background:var(--ok-soft); }
+.chip.danger{ color:var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, transparent); background:var(--danger-soft); }
+
+table{ border-collapse:collapse; width:100%; }
+th,td{ text-align:left; padding:6px 12px; border-bottom:1px solid var(--line); font-size:.84rem; }
+th{ color:var(--muted); font-weight:600; font-family:var(--font-display); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; }
+td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text-align:right; }
+.table-wrap{ overflow-x:auto; }
+
+/* ---------- slide 0: cover ---------- */
+#s-cover{ justify-content:center; align-items:flex-start; }
+.cover-grid{ display:grid; grid-template-columns:1.15fr .85fr; gap:56px; width:100%; align-items:center; }
+.cover-title{ display:flex; flex-direction:column; gap:18px; }
+.cover-title .eyebrow{ font-size:.8rem; }
+.cover-title h1{ line-height:1.04; }
+.cover-title h1 em{ font-style:normal; color:var(--accent); }
+.cover-sub{ color:var(--muted); font-size:1.05rem; max-width:46ch; }
+.roster{ display:flex; flex-direction:column; gap:0; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--bg-panel); }
+.roster .roster-head{ padding:12px 18px; border-bottom:1px solid var(--line); font-family:var(--font-display); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted-2); }
+.roster ol{ list-style:none; margin:0; padding:0; counter-reset:m; }
+.roster li{ counter-increment:m; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--line); }
+.roster li:last-child{ border-bottom:none; }
+.roster li::before{ content:counter(m,decimal-leading-zero); font-family:var(--font-display); color:var(--accent); font-size:.82rem; width:1.6em; }
+.roster li span{ font-size:.98rem; }
+.cover-maze{ position:relative; }
+.cover-maze svg{ width:100%; height:auto; display:block; opacity:.9; }
+
+/* ---------- slide 1: map ---------- */
+.map-layout{ display:grid; grid-template-columns:1.15fr .85fr; gap:34px; align-items:start; flex:1 1 auto; min-height:0; }
+.map-canvas-wrap{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; display:flex; align-items:center; justify-content:center; }
+.map-canvas-wrap svg{ width:100%; height:auto; max-height:56vh; }
+.map-side{ display:flex; flex-direction:column; gap:14px; }
+.stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.stat{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; }
+.stat b{ display:block; font-family:var(--font-display); font-size:1.3rem; color:var(--accent); }
+.stat span{ font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+.editor{ display:flex; flex-direction:column; gap:10px; }
+.mode-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.mode-btn{
+  flex:1 1 auto; appearance:none; cursor:pointer; padding:9px 10px; border-radius:var(--radius-sm);
+  border:1px solid var(--line-strong); background:var(--bg-inset); color:var(--ink); font-size:.78rem;
+  display:flex; align-items:center; justify-content:center; gap:6px; font-family:var(--font-body);
+}
+.mode-btn .sw{ width:9px; height:9px; border-radius:50%; }
+.mode-btn.active{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+.editor-note{ font-size:.78rem; color:var(--muted); }
+.editor-actions{ display:flex; gap:8px; }
+.btn{
+  appearance:none; cursor:pointer; border-radius:var(--radius-sm); padding:9px 14px; font-size:.82rem;
+  border:1px solid var(--line-strong); background:var(--bg-inset); color:var(--ink); font-family:var(--font-body);
+  display:inline-flex; align-items:center; gap:6px;
+}
+.btn:hover{ border-color:var(--accent); color:var(--accent); }
+.btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
+.btn.primary:hover{ filter:brightness(1.05); color:var(--accent-ink); }
+.btn:disabled{ opacity:.4; cursor:not-allowed; }
+.warn-line{ font-size:.76rem; color:var(--danger); min-height:1.1em; }
+
+/* ---------- svg maze common ---------- */
+.mz-wall{ stroke:var(--wall); stroke-width:3; stroke-linecap:round; }
+.mz-wall.undiscovered{ stroke:var(--wall-dim); }
+.mz-wall.discovered{ stroke:var(--accent); transition:stroke .5s ease; }
+.mz-border{ stroke:var(--wall); stroke-width:3.4; stroke-linecap:square; }
+.mz-wall-edit-visual{ stroke-width:3.2; stroke-linecap:round; transition:stroke .15s ease, opacity .15s ease, stroke-width .15s ease; }
+.mz-wall-edit-visual.is-wall{ stroke:var(--wall); opacity:1; }
+.mz-wall-edit-visual.is-open{ stroke:var(--line-strong); opacity:.55; stroke-dasharray:2 3; }
+.mz-wall-edit-visual.hover{ stroke:var(--accent) !important; opacity:1; stroke-width:4.5; stroke-dasharray:none; }
+.mz-wall-edit-hit{ stroke:transparent; stroke-width:12; }
+.mz-grid-dot{ fill:var(--line-strong); }
+.mz-cell-hit{ fill:transparent; cursor:pointer; }
+.mz-cell-hit:hover{ fill:var(--accent-soft); }
+.mz-label{ fill:var(--muted-2); font-family:var(--font-display); font-size:9px; }
+.mz-start{ fill:var(--accent-2); }
+.mz-goal{ fill:var(--ok); }
+.mz-goal-ring{ fill:none; stroke:var(--ok); stroke-width:2; opacity:.55; }
+.mz-red{ fill:var(--danger); }
+.mz-robot{ fill:var(--accent); transition: transform var(--step-ms,520ms) cubic-bezier(.4,0,.2,1); transform-box:fill-box; }
+.mz-trail{ fill:none; stroke:var(--accent); stroke-width:2; stroke-dasharray:3 4; opacity:.45; }
+.mz-sense-ring{ fill:none; stroke:var(--accent-2); stroke-width:2; opacity:0; }
+.mz-sense-ring.pulse{ animation:pulseRing .6s ease-out; }
+@keyframes pulseRing{ 0%{ opacity:.9; r:6; } 100%{ opacity:0; r:22; } }
+
+/* ---------- generic two-col content slides ---------- */
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:28px; flex:1 1 auto; min-height:0; align-items:start; }
+.three-col{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.lead{ font-size:1.05rem; color:var(--muted); max-width:60ch; }
+.bullets{ display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; }
+.bullets li{ display:flex; gap:12px; align-items:flex-start; }
+.bullets li .ico{ flex:0 0 auto; width:26px; height:26px; border-radius:7px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:.7rem; margin-top:2px; }
+.bullets li p{ font-size:.92rem; }
+.bullets li b{ display:block; font-size:.95rem; margin-bottom:2px; }
+
+/* ---------- robot spec cards ---------- */
+.spec-card{ display:flex; flex-direction:column; gap:8px; }
+.spec-card .spec-head{ display:flex; align-items:center; gap:10px; }
+.spec-card .spec-ico{ width:30px; height:30px; border-radius:8px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1rem; flex:0 0 auto; }
+.spec-card dl{ margin:0; display:grid; grid-template-columns:auto 1fr; gap:4px 10px; font-size:.82rem; }
+.spec-card dt{ color:var(--muted); }
+.spec-card dd{ margin:0; text-align:right; font-family:var(--font-display); font-variant-numeric:tabular-nums; }
+
+/* ---------- simulation slides ---------- */
+.sim-layout{ display:grid; grid-template-columns:1.1fr .9fr; gap:24px; flex:1 1 auto; min-height:0; }
+.sim-stage{ display:flex; flex-direction:column; gap:12px; min-height:0; }
+.sim-canvas{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; flex:1 1 auto; display:flex; align-items:center; justify-content:center; min-height:0; }
+.sim-canvas svg{ width:100%; height:100%; max-height:46vh; }
+.sim-controls{ display:flex; align-items:center; gap:10px; background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:10px 14px; flex-wrap:wrap; }
+.sim-controls .spacer{ flex:1 1 auto; }
+.sim-controls input[type=range]{ width:110px; accent-color:var(--accent); }
+.sim-controls .fr{ display:flex; align-items:center; gap:8px; font-size:.76rem; color:var(--muted); }
+.progress-mini{ height:4px; border-radius:2px; background:var(--bg-inset); overflow:hidden; flex:1 1 140px; }
+.progress-mini i{ display:block; height:100%; background:var(--accent); width:0%; transition:width .2s linear; }
+
+.sim-console{ display:flex; flex-direction:column; gap:10px; min-height:0; }
+.state-strip{ display:flex; gap:6px; flex-wrap:wrap; }
+.state-chip{ font-family:var(--font-display); font-size:.62rem; padding:4px 8px; border-radius:6px; border:1px solid var(--line-strong); color:var(--muted-2); background:var(--bg-inset); letter-spacing:.03em; }
+.state-chip.active{ color:var(--accent-ink); background:var(--accent); border-color:var(--accent); font-weight:700; }
+
+.sensor-cards{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.sensor-card{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; display:flex; flex-direction:column; gap:6px; }
+.sensor-card.active-sensor{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.sensor-card.clickable{ cursor:pointer; }
+.sensor-card.clickable:hover{ border-color:var(--accent-2); }
+.sensor-card.expanded{ border-color:var(--accent-2); box-shadow:0 0 0 1px var(--accent-2) inset; }
+.sc-expand{ font-family:var(--font-display); color:var(--muted-2); font-size:.68rem; }
+.sensor-detail{ display:none; background:var(--bg-inset); border:1px solid var(--line-strong); border-radius:var(--radius-sm); padding:12px 14px; font-size:.76rem; line-height:1.6; color:var(--muted); max-height:230px; overflow-y:auto; }
+.sensor-detail.open{ display:block; }
+.sensor-detail h4{ margin:0 0 8px; color:var(--accent-2); font-size:.82rem; }
+.sensor-detail p{ margin:0 0 8px; }
+.sensor-detail ul{ margin:4px 0 8px; padding-left:18px; }
+.sensor-detail li{ margin-bottom:3px; }
+.sensor-detail b{ color:var(--ink); }
+.sensor-detail code{ font-family:var(--font-display); color:var(--accent); font-size:.9em; }
+.sensor-card .sc-head{ display:flex; align-items:center; justify-content:space-between; }
+.sensor-card .sc-head b{ font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; font-family:var(--font-display); color:var(--muted); }
+.sensor-card .sc-val{ font-family:var(--font-display); font-size:.86rem; }
+.compass{ display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:3px; width:70px; height:70px; margin:0 auto; }
+.compass i{ background:var(--bg-inset); border-radius:3px; font-style:normal; }
+.compass i.n{ grid-column:2; grid-row:1; } .compass i.w{ grid-column:1; grid-row:2; }
+.compass i.c{ grid-column:2; grid-row:2; background:var(--accent-soft); border-radius:50%; }
+.compass i.e{ grid-column:3; grid-row:2; } .compass i.s{ grid-column:2; grid-row:3; }
+.compass i.wall{ background:var(--danger-soft); box-shadow:inset 0 0 0 1px var(--danger); }
+.compass i.open{ background:var(--ok-soft); box-shadow:inset 0 0 0 1px var(--ok); }
+.cam-swatch{ width:20px; height:20px; border-radius:50%; border:1px solid var(--line-strong); background:var(--bg-inset); flex:0 0 auto; }
+.cam-swatch.verde{ background:var(--ok); box-shadow:0 0 0 4px var(--ok-soft); }
+.cam-swatch.rojo{ background:var(--danger); box-shadow:0 0 0 4px var(--danger-soft); }
+
+.decision-box{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; min-height:88px; }
+.decision-box table{ font-size:.76rem; }
+.decision-box td, .decision-box th{ padding:4px 8px; }
+.decision-box tr.chosen td{ color:var(--accent); font-weight:700; }
+.decision-box tbody tr{ cursor:pointer; }
+.decision-box tbody tr:hover td{ background:var(--accent-soft); }
+.decision-box tbody tr.open td{ background:var(--accent-soft); }
+.decision-hint{ font-size:.7rem; color:var(--muted-2); margin:6px 0 0; }
+.decision-detail{ display:none; margin-top:8px; padding-top:8px; border-top:1px dashed var(--line-strong); font-size:.76rem; color:var(--muted); line-height:1.55; }
+.decision-detail.open{ display:block; }
+.decision-detail b{ color:var(--accent-2); }
+
+.lidar-ray{ stroke-width:2.5; stroke-linecap:round; opacity:0; transition:opacity .3s ease, stroke .3s ease; }
+.lidar-ray.show{ opacity:.85; }
+
+.log-panel{ background:var(--bg-inset); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; flex:1 1 auto; min-height:0; overflow-y:auto; font-family:var(--font-display); font-size:.72rem; display:flex; flex-direction:column; gap:3px; }
+.log-panel .lg{ color:var(--muted); white-space:pre-wrap; }
+.log-panel .lg b{ color:var(--ink); }
+.log-panel .lg.tag-SENSAR b{ color:var(--accent); }
+.log-panel .lg.tag-CAMARA b{ color:var(--accent-2); }
+.log-panel .lg.tag-DECISION b{ color:#c792ea; }
+.log-panel .lg.tag-GIRO b, .log-panel .lg.tag-GIRO_FIN b{ color:var(--accent-2); }
+.log-panel .lg.tag-TERMINO b, .log-panel .lg.tag-FIN b{ color:var(--ok); }
+.legend-note{ font-size:.72rem; color:var(--muted-2); }
+
+/* ---------- evidence ---------- */
+.evi-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.evi-slot{ height:118px; border:1.5px dashed var(--line-strong); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; color:var(--muted-2); font-size:.78rem; background:var(--bg-panel); }
+.evi-slot b{ font-family:var(--font-display); font-size:1.4rem; color:var(--line-strong); }
+
+/* scrollbars */
+.log-panel::-webkit-scrollbar{ width:8px; }
+.log-panel::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:4px; }
+
+@media (max-width: 980px){
+  .cover-grid, .map-layout, .two-col, .sim-layout{ grid-template-columns:1fr; }
+  .stat-row, .three-col, .sensor-cards{ grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" style="width:0%"></div>
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> ROBÓTICA · ESAN · RETO FINAL</div>
+  <div id="topbar-slide">01 / 08</div>
+</div>
+
+<div class="deck">
+  <div class="slides" id="slides">
+
+    <!-- ============ 0. CARÁTULA ============ -->
+    <section class="slide active" id="s-cover">
+      <div class="cover-grid">
+        <div class="cover-title">
+          <div class="eyebrow">Robótica — ESAN · 2026-1 · Reto Final</div>
+          <h1>Resolviendo el<br/><em>laberinto</em>.</h1>
+          <p class="cover-sub">Exploración autónoma con flood fill + speed run garantizado por BFS, sobre un Yahboom ROSMASTER R2 con LiDAR MS200, odometría por encoders y cámara de detección de color.</p>
+          <div class="mode-row" style="margin-top:6px;">
+            <span class="chip on">Intento 1 · Exploración</span>
+            <span class="chip amber">Intento 2 · Speed run</span>
+          </div>
+        </div>
+        <div class="roster">
+          <div class="roster-head">Equipo</div>
+          <ol>
+            <li><span>Andrés Quiliche Chávez</span></li>
+            <li><span>Jummy Gave Ramírez</span></li>
+            <li><span>Beatriz Bravo Lázaro</span></li>
+            <li><span>Frayder Meza Morveli</span></li>
+          </ol>
+        </div>
+      </div>
+      <div class="cover-maze" id="cover-maze"></div>
+    </section>
+
+    <!-- ============ 1. MAPA ============ -->
+    <section class="slide" id="s-map">
+      <div class="slide-head">
+        <div class="kicker-row"><span class="eyebrow">02 · La pista</span></div>
+        <h2>Laberinto 12×8 — celdas de 30×30&nbsp;cm</h2>
+        <p class="lead">3.6&nbsp;m × 2.4&nbsp;m en total. El robot arranca sin conocer ningún muro interno; solo conoce el tamaño de la grilla, su celda de inicio y su heading inicial (N).</p>
+      </div>
+      <div class="map-layout">
+        <div class="map-canvas-wrap"><svg id="map-svg" viewBox="0 0 552 368"></svg></div>
+        <div class="map-side">
+          <div class="stat-row">
+            <div class="stat"><b id="stat-bfs">18</b><span>Movs. óptimos (BFS)</span></div>
+            <div class="stat"><b>96</b><span>Celdas totales</span></div>
+            <div class="stat"><b>30&nbsp;cm</b><span>Lado de celda</span></div>
+          </div>
+          <div class="card editor">
+            <h3>Editor dinámico</h3>
+            <p class="editor-note" id="editor-note">Click en una celda para aplicar el modo activo. Inicio y meta se recalculan al vuelo (BFS); los puntos rojos son marcas para la cámara (detección tipo PARE).</p>
+            <div class="mode-row">
+              <button class="mode-btn active" data-mode="inicio"><span class="sw" style="background:var(--accent-2)"></span> Inicio</button>
+              <button class="mode-btn" data-mode="meta"><span class="sw" style="background:var(--ok)"></span> Meta</button>
+              <button class="mode-btn" data-mode="rojo"><span class="sw" style="background:var(--danger)"></span> Punto rojo</button>
+              <button class="mode-btn" data-mode="muro"><span class="sw" style="background:var(--wall)"></span> Muro</button>
+            </div>
+            <div class="editor-actions">
+              <button class="btn" id="btn-reset-map">↺ Restaurar pista original</button>
+              <button class="btn" id="btn-clear-reds">Borrar puntos rojos</button>
+            </div>
+            <div class="warn-line" id="map-warn"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. PROPIEDADES DEL ROBOT ============ -->
+    <section class="slide" id="s-robot">
+      <div class="slide-head">
+        <span class="eyebrow">03 · Plataforma</span>
+        <h2>Yahboom ROSMASTER R2 — ficha técnica</h2>
+        <p class="lead">Raspberry&nbsp;Pi&nbsp;5 + coprocesador ESP32-S3 (microROS), sobre ROS&nbsp;2&nbsp;Humble.</p>
+      </div>
+      <div class="grid-cards three-col">
+        <div class="card spec-card">
+          <div class="spec-head"><span class="spec-ico">◧</span><h3>Chasis</h3></div>
+          <dl>
+            <dt>Largo × ancho</dt><dd>24 × 16 cm</dd>
+            <dt>Estructura</dt><dd>Aluminio</dd>
+            <dt>Vel. máxima</dt><dd>1.8 m/s</dd>
+            <dt>Parachoques</dt><dd>Sí</dd>
+          </dl>
+        </div>
+        <div class="card spec-card">
+          <div class="spec-head"><span class="spec-ico">◎</span><h3>LiDAR · MS200</h3></div>
+          <dl>
+            <dt>Tipo</dt><dd>TOF 360°</dd>
+            <dt>Rango</dt><dd>0.03 – 12 m</dd>
+            <dt>Res. angular</dt><dd>0.8° @10Hz</dd>
+            <dt>Uso</dt><dd>4 zonas N/E/S/O</dd>
+          </dl>
+        </div>
+        <div class="card spec-card">
+          <div class="spec-head"><span class="spec-ico">▤</span><h3>Cámara · 2DOF</h3></div>
+          <dl>
+            <dt>Montaje</dt><dd>Pan-tilt</dd>
+            <dt>Detección</dt><dd>Color HSV</dd>
+            <dt>Verde</dt><dd>META</dd>
+            <dt>Rojo</dt><dd>PARE</dd>
+          </dl>
+        </div>
+        <div class="card spec-card">
+          <div class="spec-head"><span class="spec-ico">⟲</span><h3>Odometría</h3></div>
+          <dl>
+            <dt>Fuente</dt><dd>Encoders x2</dd>
+            <dt>Tópico</dt><dd>/odom_raw</dd>
+            <dt>factor_dist</dt><dd>0.9474</dd>
+            <dt>factor_ang</dt><dd>0.9899</dd>
+          </dl>
+        </div>
+        <div class="card spec-card">
+          <div class="spec-head"><span class="spec-ico">⌁</span><h3>IMU + energía</h3></div>
+          <dl>
+            <dt>IMU</dt><dd>6 ejes</dd>
+            <dt>Batería</dt><dd>7.4V Li-ion</dd>
+            <dt>Motores</dt><dd>12V, 2.2 kgf·cm</dd>
+            <dt>Reducción</dt><dd>1:19</dd>
+          </dl>
+        </div>
+        <div class="card spec-card">
+          <div class="spec-head"><span class="spec-ico">Ω</span><h3>Middleware</h3></div>
+          <dl>
+            <dt>OS</dt><dd>Ubuntu + ROS2</dd>
+            <dt>Distro</dt><dd>Humble</dd>
+            <dt>Coproc.</dt><dd>ESP32-S3</dd>
+            <dt>Ciclo</dt><dd>20 Hz</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. DESCRIPCIÓN DEL RETO ============ -->
+    <section class="slide" id="s-challenge">
+      <div class="slide-head">
+        <span class="eyebrow">04 · El reto</span>
+        <h2>Un laberinto desconocido, dos intentos</h2>
+      </div>
+      <div class="two-col">
+        <ul class="bullets">
+          <li><div class="ico">1</div><p><b>Mapa desconocido.</b> El robot arranca en A1 mirando al Norte sin conocer ningún muro interno de la pista de 12×8 celdas.</p></li>
+          <li><div class="ico">2</div><p><b>Meta por color.</b> La celda meta se confirma visualmente: la cámara reconoce el cartel/zona <span style="color:var(--ok)">verde</span> como META.</p></li>
+          <li><div class="ico">3</div><p><b>Puntos de interés.</b> Marcas <span style="color:var(--danger)">rojas</span> en la pista funcionan como señal tipo PARE — el robot las reconoce y las registra.</p></li>
+          <li><div class="ico">4</div><p><b>Dos intentos, formato micromouse.</b> El primero prioriza completar el laberinto de forma segura; el segundo prioriza velocidad usando lo aprendido.</p></li>
+        </ul>
+        <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+          <h3>Restricciones del sensado por celda</h3>
+          <table>
+            <tr><th>Parámetro</th><th class="num">Valor</th></tr>
+            <tr><td>Umbral de pared (LiDAR)</td><td class="num mono">0.20 m</td></tr>
+            <tr><td>Muestras por celda</td><td class="num mono">5</td></tr>
+            <tr><td>Consenso mínimo</td><td class="num mono">3 / 5</td></tr>
+            <tr><td>Pausa antes de girar</td><td class="num mono">1.0 s</td></tr>
+            <tr><td>Umbral de colisión</td><td class="num mono">0.10 m</td></tr>
+            <tr><td>Máx. celdas exploración</td><td class="num mono">200</td></tr>
+          </table>
+          <p class="muted" style="font-size:.82rem;">Una sola lectura de LiDAR puede fallar por ruido; por eso cada celda se sensa 5 veces y una pared solo se confirma si aparece en ≥3 de esas lecturas.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. SOLUCIÓN — OVERVIEW ============ -->
+    <section class="slide" id="s-solution">
+      <div class="slide-head">
+        <span class="eyebrow">05 · Solución</span>
+        <h2>Arquitectura en dos intentos</h2>
+        <p class="lead">El intento 1 construye el grafo del laberinto celda por celda; el intento 2 lo recorre por el camino más corto, garantizado óptimo.</p>
+      </div>
+      <div class="two-col">
+        <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+          <span class="chip on">Intento 1 — Exploración</span>
+          <h3>Flood fill + fase de verificación</h3>
+          <p class="muted" style="font-size:.9rem;">En cada celda: sensa las 4 direcciones con el LiDAR, confirma color con la cámara, y decide con distancia flood-fill hacia la meta (muro no sensado = se asume abierto). Al llegar a la meta, la <b>fase B</b> revisa que la ruta candidata (BFS sobre lo ya conocido) esté 100% sensada; si falta algo, sigue explorando. Esto garantiza que el intento 2 sea óptimo.</p>
+          <div class="mode-row"><span class="chip">LiDAR</span><span class="chip">ODOM_RAW</span><span class="chip">CÁMARA</span></div>
+        </div>
+        <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+          <span class="chip amber">Intento 2 — Speed run</span>
+          <h3>BFS + compresión de tramos</h3>
+          <p class="muted" style="font-size:.9rem;">Con el mapa ya descubierto y verificado, se calcula el camino mínimo por BFS y se comprime en tramos rectos (varias celdas seguidas = un solo avance, sin pausas de sensado). Solo se detiene para girar. Resultado sobre la pista de examen: <b class="mono" style="color:var(--accent)">18 movimientos, 4 tramos</b>.</p>
+          <div class="mode-row"><span class="chip">ODOM_RAW</span><span class="chip">Mapa ya conocido</span></div>
+        </div>
+      </div>
+      <div class="table-wrap card">
+        <table>
+          <tr><th>Sensor / dato</th><th>Tópico</th><th>Se usa para</th></tr>
+          <tr><td>LiDAR MS200</td><td class="mono">/scan</td><td>Detectar muro en 4 zonas relativas al heading (N/E/S/O) al llegar a cada celda</td></tr>
+          <tr><td>Encoders (odometría)</td><td class="mono">/odom_raw</td><td>Cerrar el avance de 30 cm y el giro de 90°/180° por posición y yaw</td></tr>
+          <tr><td>Cámara (HSV)</td><td class="mono">/camera/image_raw</td><td>Confirmar META (verde) y marcar puntos PARE (rojo)</td></tr>
+          <tr><td>Buzzer</td><td class="mono">/beep</td><td>Pitido corto antes de cada giro</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 5. RECORRIDO 1 (interactive) ============ -->
+    <section class="slide" id="s-run1">
+      <div class="slide-head" style="gap:4px;">
+        <span class="eyebrow">06 · Solución — Recorrido 1</span>
+        <h2>Exploración celda por celda (flood fill)</h2>
+      </div>
+      <div class="sim-layout" style="flex:1 1 auto; min-height:0;">
+        <div class="sim-stage">
+          <div class="sim-canvas"><svg id="run1-svg" viewBox="0 0 552 368"></svg></div>
+          <div class="sim-controls">
+            <button class="btn" id="r1-back">⏮</button>
+            <button class="btn primary" id="r1-play">▶ Reproducir</button>
+            <button class="btn" id="r1-step">Paso ⏭</button>
+            <button class="btn" id="r1-reset">↺ Reiniciar</button>
+            <div class="progress-mini"><i id="r1-progress"></i></div>
+            <div class="fr">Rápida <input type="range" id="r1-speed" min="200" max="3000" value="1100" step="50"> Lenta <b class="mono" id="r1-speed-label" style="color:var(--accent); min-width:52px;">1100 ms</b></div>
+          </div>
+          <div class="state-strip" id="r1-states"></div>
+        </div>
+        <div class="sim-console">
+          <div class="sensor-cards" id="r1-sensors"></div>
+          <div class="decision-box" id="r1-decision"><span class="muted mono" style="font-size:.76rem;">Sin decisión aún — presiona reproducir.</span></div>
+          <div class="log-panel" id="r1-log"></div>
+          <p class="legend-note">Muros en <b style="color:var(--accent)">cian</b> = ya descubiertos por el robot (fog-of-war). Los muros aún no sensados no se dibujan, aunque existan realmente.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. RECORRIDO 2 (interactive) ============ -->
+    <section class="slide" id="s-run2">
+      <div class="slide-head" style="gap:4px;">
+        <span class="eyebrow">07 · Solución — Recorrido 2</span>
+        <h2>Speed run: BFS sobre el mapa ya conocido</h2>
+      </div>
+      <div class="sim-layout" style="flex:1 1 auto; min-height:0;">
+        <div class="sim-stage">
+          <div class="sim-canvas"><svg id="run2-svg" viewBox="0 0 552 368"></svg></div>
+          <div class="sim-controls">
+            <button class="btn" id="r2-back">⏮</button>
+            <button class="btn primary" id="r2-play">▶ Reproducir</button>
+            <button class="btn" id="r2-step">Paso ⏭</button>
+            <button class="btn" id="r2-reset">↺ Reiniciar</button>
+            <div class="progress-mini"><i id="r2-progress"></i></div>
+            <div class="fr">Rápida <input type="range" id="r2-speed" min="200" max="3000" value="1100" step="50"> Lenta <b class="mono" id="r2-speed-label" style="color:var(--accent); min-width:52px;">1100 ms</b></div>
+          </div>
+          <div class="state-strip" id="r2-states"></div>
+        </div>
+        <div class="sim-console">
+          <div class="sensor-cards" id="r2-sensors"></div>
+          <div class="decision-box" id="r2-decision"><span class="muted mono" style="font-size:.76rem;">Ruta BFS calculada sobre el mapa ya verificado por la fase B del intento 1.</span></div>
+          <div class="log-panel" id="r2-log"></div>
+          <p class="legend-note">Sin pausas de sensado entre celdas de un mismo tramo — solo se detiene para girar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 7. EVIDENCIAS ============ -->
+    <section class="slide" id="s-evidence">
+      <div class="slide-head">
+        <span class="eyebrow">08 · Evidencias</span>
+        <h2>Pista física y corridas reales</h2>
+        <p class="lead">Espacio para fotos/video de la pista armada y de las corridas del robot — completar antes de la exposición.</p>
+      </div>
+      <div class="evi-grid">
+        <div class="evi-slot"><b>＋</b>Foto — pista armada</div>
+        <div class="evi-slot"><b>＋</b>Foto — robot en A1</div>
+        <div class="evi-slot"><b>＋</b>Video — intento 1</div>
+        <div class="evi-slot"><b>＋</b>Video — intento 2</div>
+        <div class="evi-slot"><b>＋</b>Foto — cartel META</div>
+        <div class="evi-slot"><b>＋</b>Foto — cartel PARE</div>
+      </div>
+      <div class="table-wrap card">
+        <table>
+          <tr><th>Métrica</th><th class="num">Simulado</th><th class="num">Real (a completar)</th></tr>
+          <tr><td>Movimientos — intento 1</td><td class="num mono" id="evi-r1-mov">—</td><td class="num mono">—</td></tr>
+          <tr><td>Movimientos — intento 2</td><td class="num mono" id="evi-r2-mov">18</td><td class="num mono">—</td></tr>
+          <tr><td>Celdas sensadas</td><td class="num mono" id="evi-sensadas">—</td><td class="num mono">—</td></tr>
+          <tr><td>Tiempo total (min)</td><td class="num mono">—</td><td class="num mono">—</td></tr>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div class="navbar">
+  <div class="track">
+    <button class="navbtn" id="nav-prev">‹</button>
+    <div class="dots" id="nav-dots"></div>
+    <button class="navbtn" id="nav-next">›</button>
+    <span class="navbar-title title" id="nav-title">Carátula</span>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   MAZE MODEL — puerto directo de sim/maze.py / sim/explorer.py / sim/speedrun.py
+   ========================================================================= */
+const ASCII_PISTA = `
++--+--+--+--+--+--+--+--+--+--+--+--+
+|           |                     M |
++  +  +  +  +  +  +  +  +  +  +  +  +
+|           |                       |
++  +  +--+--+  +  +  +  +--+--+  +  +
+|                 |           |     |
++  +  +  +  +  +  +  +  +  +  +  +  +
+|                 |           |     |
++  +  +  +  +--+--+--+--+  +  +  +  +
+|     |                 |           |
++  +  +  +  +  +  +  +  +  +--+  +  +
+|     |                 |           |
++  +  +  +  +  +  +  +  +--+--+--+--+
+|           |     |                 |
++  +  +  +  +  +  +  +  +  +  +  +  +
+|I                |                 |
++--+--+--+--+--+--+--+--+--+--+--+--+
+`;
+
+const DIRS = { N:[0,1], E:[1,0], S:[0,-1], O:[-1,0] };
+const GIRO_DERECHA   = { N:'E', E:'S', S:'O', O:'N' };
+const GIRO_IZQUIERDA = { N:'O', O:'S', S:'E', E:'N' };
+const GIRO_180       = { N:'S', S:'N', E:'O', O:'E' };
+const ORDEN_DESEMPATE = ['N','E','S','O'];
+
+function wallKey(a,b){ const k1=a[0]+','+a[1], k2=b[0]+','+b[1]; return k1<k2? k1+'|'+k2 : k2+'|'+k1; }
+function nombre(c){ return String.fromCharCode(65+c[0]) + (c[1]+1); }
+function keyOf(c){ return c[0]+','+c[1]; }
+
+function parseMaze(texto){
+  const lineas = texto.replace(/^\n+|\n+$/g,'').split('\n');
+  const rows = Math.floor((lineas.length-1)/2);
+  const cols = Math.floor((Math.max(...lineas.map(l=>l.length))-1)/3);
+  const ancho = cols*3+1;
+  const norm = lineas.map(l=>l.padEnd(ancho,' '));
+  const walls = new Set(); const wallPairs=[];
+  let start=null, goal=null;
+  for(let r=0;r<rows;r++){
+    const y = rows-1-r;
+    const filaCeldas = norm[r*2+1];
+    const filaBajo = norm[r*2+2];
+    for(let c=0;c<cols;c++){
+      const interior = filaCeldas.slice(c*3+1, c*3+3);
+      if(interior.includes('I')) start=[c,y];
+      if(interior.includes('M')) goal=[c,y];
+      if(c<cols-1 && filaCeldas[c*3+3]==='|'){ const a=[c,y], b=[c+1,y]; walls.add(wallKey(a,b)); wallPairs.push([a,b]); }
+      if(y>0 && filaBajo[c*3+1]==='-'){ const a=[c,y], b=[c,y-1]; walls.add(wallKey(a,b)); wallPairs.push([a,b]); }
+    }
+  }
+  return { cols, rows, walls, wallPairs, start, goal };
+}
+const MZ = parseMaze(ASCII_PISTA);
+const ALL_EDGES = [];
+for(let x=0;x<MZ.cols;x++) for(let y=0;y<MZ.rows;y++){
+  if(x<MZ.cols-1) ALL_EDGES.push([[x,y],[x+1,y]]);
+  if(y<MZ.rows-1) ALL_EDGES.push([[x,y],[x,y+1]]);
+}
+
+function dentro(c){ return c[0]>=0 && c[0]<MZ.cols && c[1]>=0 && c[1]<MZ.rows; }
+function vecinos(c){ const out=[]; for(const d of Object.keys(DIRS)){ const [dx,dy]=DIRS[d]; const n=[c[0]+dx,c[1]+dy]; if(dentro(n)) out.push([n,d]); } return out; }
+function bfs(start, goal, walls){
+  const prev=new Map(); prev.set(keyOf(start), null);
+  const q=[start]; let qi=0;
+  while(qi<q.length){
+    const c=q[qi++];
+    if(c[0]===goal[0] && c[1]===goal[1]) break;
+    for(const [n] of vecinos(c)){
+      if(!walls.has(wallKey(c,n)) && !prev.has(keyOf(n))){ prev.set(keyOf(n), c); q.push(n); }
+    }
+  }
+  if(!prev.has(keyOf(goal))) return null;
+  const path=[goal];
+  while(prev.get(keyOf(path[path.length-1])) !== null) path.push(prev.get(keyOf(path[path.length-1])));
+  return path.reverse();
+}
+function flood(targets, walls){
+  const dist=new Map(); const q=[];
+  for(const t of targets){ dist.set(keyOf(t),0); q.push(t); }
+  let qi=0;
+  while(qi<q.length){
+    const c=q[qi++];
+    for(const [n] of vecinos(c)){
+      if(!walls.has(wallKey(c,n)) && !dist.has(keyOf(n))){ dist.set(keyOf(n), dist.get(keyOf(c))+1); q.push(n); }
+    }
+  }
+  return dist;
+}
+function ladoParaGirar(actual, deseada){
+  if(actual===deseada) return 'NINGUNO';
+  if(GIRO_DERECHA[actual]===deseada) return 'DERECHA';
+  if(GIRO_IZQUIERDA[actual]===deseada) return 'IZQUIERDA';
+  return 'ATRAS';
+}
+function wallBoolAt(pos, d, conocidos){
+  const [dx,dy] = DIRS[d];
+  const n = [pos[0]+dx, pos[1]+dy];
+  if(!dentro(n)) return true; // borde de la grilla, siempre pared
+  const w = wallKey(pos,n);
+  return conocidos.has(w) ? state.walls.has(w) : null;
+}
+function actionDetailHTML(lado, o){
+  if(lado === 'NINGUNO'){
+    return `<b>AVANZAR</b> directo hacia ${o.d} (${nombre(o.n)}), 30&nbsp;cm.<br>
+      Cierra por <b>/odom_raw</b> (factor_dist_odom=0.9474). Corrección continua en línea recta:
+      kp_ángulo=2.2, kp_lateral=1.1, máx. angular=0.3&nbsp;rad/s.<br>
+      Se corta antes si el LiDAR frontal ya ve pared a ≤0.15&nbsp;m.`;
+  }
+  return `<b>GIRAR ${lado}</b> hasta apuntar a ${o.d}, después avanza a ${nombre(o.n)}.<br>
+    Cierra por yaw absoluto de <b>/odom_raw</b> (factor_ang_odom=0.9899): velocidad angular≈0.6&nbsp;rad/s,
+    velocidad lineal≈0.06&nbsp;m/s.<br>
+    Tolerancia ±3° sobre el objetivo, con un piso mínimo de 4° realmente girados antes de aceptar el corte.`;
+}
+function comprimir(ruta){
+  const segs=[]; let i=0;
+  while(i<ruta.length-1){
+    const dx=ruta[i+1][0]-ruta[i][0], dy=ruta[i+1][1]-ruta[i][1];
+    let j=i;
+    while(j<ruta.length-1 && (ruta[j+1][0]-ruta[j][0])===dx && (ruta[j+1][1]-ruta[j][1])===dy) j++;
+    const dirName = Object.keys(DIRS).find(d=>DIRS[d][0]===dx && DIRS[d][1]===dy);
+    segs.push({ desde:ruta[i], hasta:ruta[j], dir:dirName, celdas:j-i });
+    i=j;
+  }
+  return segs;
+}
+
+/* =========================================================================
+   EDITABLE STATE
+   ========================================================================= */
+const state = { start: MZ.start.slice(), goal: MZ.goal.slice(), reds: [], walls: new Set(MZ.walls), mode: 'inicio' };
+function resetState(){ state.start = MZ.start.slice(); state.goal = MZ.goal.slice(); state.reds = []; state.walls = new Set(MZ.walls); }
+function hasRed(c){ return state.reds.some(r=>r[0]===c[0] && r[1]===c[1]); }
+function isStart(c){ return c[0]===state.start[0] && c[1]===state.start[1]; }
+function isGoal(c){ return c[0]===state.goal[0] && c[1]===state.goal[1]; }
+
+/* =========================================================================
+   SVG RENDERING (grid + walls + markers)
+   ========================================================================= */
+const CELL = 46;
+function cornerSvg(i,j){ return [ i*CELL, (MZ.rows-j)*CELL ]; }
+function centerSvg(c){ return cornerSvg(c[0]+0.5, c[1]+0.5); }
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs){ const e=document.createElementNS(SVGNS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+function buildBaseMaze(svg, opts){
+  opts = opts || {};
+  svg.setAttribute('viewBox', `0 0 ${MZ.cols*CELL} ${MZ.rows*CELL}`);
+  svg.innerHTML='';
+  const g = el('g', {});
+  svg.appendChild(g);
+
+  // grid dots at corners (subtle blueprint feel)
+  for(let i=0;i<=MZ.cols;i++) for(let j=0;j<=MZ.rows;j++){
+    const [x,y] = cornerSvg(i,j);
+    g.appendChild(el('circle', { cx:x, cy:y, r:1, class:'mz-grid-dot' }));
+  }
+
+  // border
+  for(let x=0;x<MZ.cols;x++){
+    const [x1,y1]=cornerSvg(x,MZ.rows), [x2,y2]=cornerSvg(x+1,MZ.rows);
+    g.appendChild(el('line', {x1,y1,x2,y2, class:'mz-border'}));
+    const [bx1,by1]=cornerSvg(x,0), [bx2,by2]=cornerSvg(x+1,0);
+    g.appendChild(el('line', {x1:bx1,y1:by1,x2:bx2,y2:by2, class:'mz-border'}));
+  }
+  for(let y=0;y<MZ.rows;y++){
+    const [x1,y1]=cornerSvg(0,y), [x2,y2]=cornerSvg(0,y+1);
+    g.appendChild(el('line', {x1,y1,x2,y2, class:'mz-border'}));
+    const [bx1,by1]=cornerSvg(MZ.cols,y), [bx2,by2]=cornerSvg(MZ.cols,y+1);
+    g.appendChild(el('line', {x1:bx1,y1:by1,x2:bx2,y2:by2, class:'mz-border'}));
+  }
+
+  // internal walls: either always shown (fog-of-war controlled externally), or
+  // fully editable (map slide) — every possible cell-pair is a candidate wall.
+  const wallEls = {};
+  for(const [a,b] of ALL_EDGES){
+    let x1,y1,x2,y2;
+    if(a[1]===b[1]){ const x=Math.max(a[0],b[0]); [x1,y1]=cornerSvg(x,a[1]); [x2,y2]=cornerSvg(x,a[1]+1); }
+    else { const y=Math.max(a[1],b[1]); [x1,y1]=cornerSvg(a[0],y); [x2,y2]=cornerSvg(a[0]+1,y); }
+    const key = wallKey(a,b);
+    const isWall = state.walls.has(key);
+    if(opts.editable){
+      const visual = el('line', {x1,y1,x2,y2, class:'mz-wall-edit-visual ' + (isWall?'is-wall':'is-open')});
+      g.appendChild(visual);
+      const hit = el('line', {x1,y1,x2,y2, class:'mz-wall-edit-hit'});
+      hit.style.pointerEvents = state.mode === 'muro' ? 'stroke' : 'none';
+      hit.addEventListener('click', ()=> opts.onEdgeClick && opts.onEdgeClick(a,b,key));
+      hit.addEventListener('mouseenter', ()=>{ if(state.mode==='muro') visual.classList.add('hover'); });
+      hit.addEventListener('mouseleave', ()=> visual.classList.remove('hover'));
+      g.appendChild(hit);
+      wallEls[key] = visual;
+    } else {
+      if(!isWall) continue; // solo se dibujan muros reales (fog-of-war o mapa completo)
+      const line = el('line', {x1,y1,x2,y2, class: 'mz-wall ' + (opts.fog ? 'undiscovered' : 'discovered')});
+      g.appendChild(line);
+      wallEls[key] = line;
+    }
+  }
+
+  // column / row labels
+  for(let x=0;x<MZ.cols;x++){
+    const [lx,ly] = cornerSvg(x+0.5, MZ.rows);
+    g.appendChild(el('text', {x:lx, y:ly-6, class:'mz-label', 'text-anchor':'middle'})).textContent = String.fromCharCode(65+x);
+  }
+  for(let y=0;y<MZ.rows;y++){
+    const [lx,ly] = cornerSvg(0, y+0.5);
+    const t = el('text', {x:lx-8, y:ly+3, class:'mz-label', 'text-anchor':'end'}); t.textContent = (y+1);
+    g.appendChild(t);
+  }
+
+  return { g, wallEls };
+}
+
+function drawMarkers(g, opts){
+  opts = opts || {};
+  // click layer (optional)
+  if(opts.clickable){
+    for(let x=0;x<MZ.cols;x++) for(let y=0;y<MZ.rows;y++){
+      const [cx,cy]=centerSvg([x,y]);
+      const hit = el('rect', {x:cx-CELL/2, y:cy-CELL/2, width:CELL, height:CELL, class:'mz-cell-hit'});
+      hit.style.pointerEvents = state.mode === 'muro' ? 'none' : 'auto';
+      hit.addEventListener('click', ()=> opts.onCellClick([x,y]));
+      g.appendChild(hit);
+    }
+  }
+  // start
+  const [sx,sy] = centerSvg(state.start);
+  g.appendChild(el('rect', {x:sx-9, y:sy-9, width:18, height:18, rx:4, class:'mz-start'}));
+  const st = el('text', {x:sx, y:sy+3.5, 'text-anchor':'middle', style:'font-family:var(--font-display);font-size:9px;fill:var(--accent-ink);font-weight:700;'}); st.textContent='I';
+  g.appendChild(st);
+  // goal
+  const [gx,gy] = centerSvg(state.goal);
+  g.appendChild(el('circle', {cx:gx, cy:gy, r:12, class:'mz-goal-ring'}));
+  g.appendChild(el('circle', {cx:gx, cy:gy, r:8, class:'mz-goal'}));
+  const gt = el('text', {x:gx, y:gy+3.5, 'text-anchor':'middle', style:'font-family:var(--font-display);font-size:9px;fill:#04210f;font-weight:700;'}); gt.textContent='M';
+  g.appendChild(gt);
+  // reds
+  for(const r of state.reds){
+    const [rx,ry] = centerSvg(r);
+    g.appendChild(el('circle', {cx:rx, cy:ry, r:7, class:'mz-red'}));
+  }
+}
+
+/* ---- Map slide (editable) ---- */
+function renderMapSlide(){
+  const svg = document.getElementById('map-svg');
+  const { g } = buildBaseMaze(svg, { fog:false, editable:true, onEdgeClick:onMapEdgeClick });
+  drawMarkers(g, { clickable:true, onCellClick: onMapCellClick });
+  const opt = bfs(state.start, state.goal, state.walls);
+  document.getElementById('stat-bfs').textContent = opt ? (opt.length-1) : '—';
+}
+function onMapCellClick(c){
+  const warn = document.getElementById('map-warn');
+  warn.textContent = '';
+  if(state.mode === 'inicio'){
+    if(isGoal(c)){ warn.textContent = 'Esa celda ya es la meta.'; return; }
+    const trial = bfs(c, state.goal, state.walls);
+    if(!trial){ warn.textContent = 'Sin camino posible desde esa celda.'; return; }
+    state.start = c;
+    state.reds = state.reds.filter(r=>!(r[0]===c[0]&&r[1]===c[1]));
+  } else if(state.mode === 'meta'){
+    if(isStart(c)){ warn.textContent = 'Esa celda ya es el inicio.'; return; }
+    const trial = bfs(state.start, c, state.walls);
+    if(!trial){ warn.textContent = 'Sin camino posible hacia esa celda.'; return; }
+    state.goal = c;
+    state.reds = state.reds.filter(r=>!(r[0]===c[0]&&r[1]===c[1]));
+  } else if(state.mode === 'rojo'){
+    if(isStart(c) || isGoal(c)){ warn.textContent = 'No se puede marcar el inicio ni la meta.'; return; }
+    if(hasRed(c)) state.reds = state.reds.filter(r=>!(r[0]===c[0]&&r[1]===c[1]));
+    else state.reds.push(c);
+  }
+  renderMapSlide();
+}
+function onMapEdgeClick(a,b,key){
+  if(state.mode !== 'muro') return;
+  const warn = document.getElementById('map-warn');
+  warn.textContent = '';
+  const wasWall = state.walls.has(key);
+  if(wasWall) state.walls.delete(key); else state.walls.add(key);
+  const trial = bfs(state.start, state.goal, state.walls);
+  if(!trial){
+    if(wasWall) state.walls.add(key); else state.walls.delete(key); // revertir
+    warn.textContent = 'Ese muro dejaría la meta inalcanzable — no se aplicó.';
+    return;
+  }
+  renderMapSlide();
+}
+
+const EDITOR_NOTES = {
+  inicio: 'Click en una celda para mover el <b>inicio</b>. Se recalcula el BFS al vuelo.',
+  meta: 'Click en una celda para mover la <b>meta</b>. Se recalcula el BFS al vuelo.',
+  rojo: 'Click en una celda para marcar/quitar un <b>punto rojo</b> (detección tipo PARE de la cámara).',
+  muro: 'Click sobre un tramo entre dos celdas para agregar o quitar un <b>muro</b>. No se permite si deja la meta inalcanzable.',
+};
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    document.getElementById('map-warn').textContent = '';
+    document.getElementById('editor-note').innerHTML = EDITOR_NOTES[state.mode] || '';
+    renderMapSlide();
+  });
+});
+document.getElementById('btn-reset-map').addEventListener('click', ()=>{ resetState(); renderMapSlide(); document.getElementById('map-warn').textContent=''; });
+document.getElementById('btn-clear-reds').addEventListener('click', ()=>{ state.reds=[]; renderMapSlide(); });
+
+/* ---- Cover mini maze (decorative, static ground-truth) ---- */
+(function renderCoverMaze(){
+  const svg = el('svg', { viewBox:`0 0 ${MZ.cols*CELL} ${MZ.rows*CELL}` });
+  document.getElementById('cover-maze').appendChild(svg);
+  const { g } = buildBaseMaze(svg, { fog:false });
+  const [sx,sy] = centerSvg(MZ.start);
+  g.appendChild(el('rect', {x:sx-9,y:sy-9,width:18,height:18,rx:4,class:'mz-start'}));
+  const [gx,gy] = centerSvg(MZ.goal);
+  g.appendChild(el('circle', {cx:gx, cy:gy, r:8, class:'mz-goal'}));
+})();
+
+/* =========================================================================
+   TIMELINE BUILDERS
+   ========================================================================= */
+function colorAt(c, goal, redSet){
+  if(c[0]===goal[0] && c[1]===goal[1]) return 'verde';
+  if(redSet.has(keyOf(c))) return 'rojo';
+  return null;
+}
+
+function buildExplorerTimeline(start, goal, reds){
+  const conocidos = new Set();
+  const sensadas = new Set();
+  const redSet = new Set(reds.map(keyOf));
+  const frames = [];
+  let pos = start.slice(), heading='N', fase='A';
+
+  function sense(c){
+    const nuevos=[];
+    for(const [n,d] of vecinos(c)){
+      const w = wallKey(c,n);
+      if(state.walls.has(w) && !conocidos.has(w)){ conocidos.add(w); nuevos.push(d); }
+    }
+    sensadas.add(keyOf(c));
+    return nuevos;
+  }
+
+  frames.push({ type:'INICIO', pos:pos.slice(), heading, fase, conocidos:new Set(conocidos), sensadasCount:sensadas.size });
+  let nuevos = sense(pos);
+  frames.push({ type:'SENSAR', pos:pos.slice(), heading, nuevos, conocidos:new Set(conocidos), sensadasCount:sensadas.size });
+  frames.push({ type:'CAMARA', pos:pos.slice(), heading, color: colorAt(pos, goal, redSet), conocidos:new Set(conocidos) });
+
+  let guard=0;
+  while(guard++ < 3000){
+    if(fase==='A' && pos[0]===goal[0] && pos[1]===goal[1]){
+      fase='B';
+      frames.push({ type:'FASE_B', pos:pos.slice(), heading, conocidos:new Set(conocidos) });
+    }
+    let targets;
+    if(fase==='A') targets=[goal];
+    else {
+      const candidata = bfs(start, goal, conocidos);
+      if(!candidata){ frames.push({type:'ABORTO', motivo:'mapa inconsistente', conocidos:new Set(conocidos)}); break; }
+      const pendientes = candidata.filter(c=>!sensadas.has(keyOf(c)));
+      if(pendientes.length===0){
+        frames.push({ type:'TERMINO', pos:pos.slice(), heading, movimientos:guard-1, sensadasCount:sensadas.size, total:MZ.cols*MZ.rows, conocidos:new Set(conocidos) });
+        break;
+      }
+      targets = pendientes;
+    }
+    const dist = flood(targets, conocidos);
+    const opciones=[];
+    for(const [n,d] of vecinos(pos)){
+      if(!conocidos.has(wallKey(pos,n))){
+        opciones.push({ dv: dist.has(keyOf(n)) ? dist.get(keyOf(n)) : Infinity, ti: ORDEN_DESEMPATE.indexOf(d), d, n });
+      }
+    }
+    if(opciones.length===0){ frames.push({type:'ABORTO', motivo:'sin dirección abierta en '+nombre(pos), conocidos:new Set(conocidos)}); break; }
+    opciones.sort((a,b)=> a.dv-b.dv || a.ti-b.ti);
+    const elegida = opciones[0];
+    frames.push({ type:'DECISION', pos:pos.slice(), heading, fase, opciones, elegida, conocidos:new Set(conocidos) });
+
+    const lado = ladoParaGirar(heading, elegida.d);
+    if(lado !== 'NINGUNO'){
+      frames.push({ type:'GIRO', pos:pos.slice(), headingFrom:heading, lado, conocidos:new Set(conocidos) });
+      heading = lado==='DERECHA' ? GIRO_DERECHA[heading] : lado==='IZQUIERDA' ? GIRO_IZQUIERDA[heading] : GIRO_180[heading];
+      frames.push({ type:'GIRO_FIN', pos:pos.slice(), heading, conocidos:new Set(conocidos) });
+    }
+    frames.push({ type:'AVANCE_INICIO', from:pos.slice(), to:elegida.n.slice(), dir:elegida.d, heading, conocidos:new Set(conocidos) });
+    pos = elegida.n.slice();
+    frames.push({ type:'AVANCE_FIN', pos:pos.slice(), heading, conocidos:new Set(conocidos) });
+    nuevos = sense(pos);
+    frames.push({ type:'SENSAR', pos:pos.slice(), heading, nuevos, conocidos:new Set(conocidos), sensadasCount:sensadas.size });
+    frames.push({ type:'CAMARA', pos:pos.slice(), heading, color: colorAt(pos, goal, redSet), conocidos:new Set(conocidos) });
+  }
+  return frames;
+}
+
+function buildSpeedrunTimeline(start, goal, reds){
+  const redSet = new Set(reds.map(keyOf));
+  const path = bfs(start, goal, state.walls);
+  const segs = comprimir(path);
+  const frames = [];
+  let heading='N', pos=start.slice();
+  frames.push({ type:'INICIO', pos:pos.slice(), heading, segs, total: path.length-1 });
+  for(const s of segs){
+    const lado = ladoParaGirar(heading, s.dir);
+    if(lado !== 'NINGUNO'){
+      frames.push({ type:'GIRO', pos:pos.slice(), headingFrom:heading, lado, dirObjetivo:s.dir });
+      heading = s.dir;
+      frames.push({ type:'GIRO_FIN', pos:pos.slice(), heading });
+    }
+    // any red / green crossed mid-segment, purely informational
+    const crossed = [];
+    let cc = s.desde.slice();
+    for(let k=0;k<s.celdas;k++){
+      cc = [cc[0]+DIRS[s.dir][0], cc[1]+DIRS[s.dir][1]];
+      const col = colorAt(cc, goal, redSet);
+      if(col) crossed.push({cell:cc.slice(), color:col});
+    }
+    frames.push({ type:'TRAMO_INICIO', from:s.desde.slice(), to:s.hasta.slice(), dir:s.dir, celdas:s.celdas, heading, crossed });
+    pos = s.hasta.slice();
+    frames.push({ type:'TRAMO_FIN', pos:pos.slice(), heading, celdas:s.celdas, crossed });
+  }
+  frames.push({ type:'TERMINO', pos:pos.slice(), heading, movimientos: path.length-1, segmentos: segs.length });
+  return frames;
+}
+
+/* =========================================================================
+   SENSOR DETAIL — explicación técnica de cada módulo de percepción,
+   click-to-expand desde las sensor-cards. Fuente: CALIBRACION_LIDAR_VISION.md
+   (LiDAR) y DETECCION_CAMARA.md (cámara / pare_detector.py).
+   ========================================================================= */
+const SENSOR_DETAILS = {
+  lidar: {
+    title: 'Descubrir entorno — LiDAR MS200',
+    html: `
+      <p><b>1. Llega y se asienta.</b> Al llegar al centro de la celda, pausa 1.0&nbsp;s (tiempo_pausa_antes_girar_s) para que el chasis deje de vibrar por el frenado antes de confiar en la lectura del LiDAR.</p>
+      <p><b>2. Toma 5 lecturas seguidas.</b> El LiDAR MS200 (TOF 360°, rango 0.03–12&nbsp;m, gira 7–15&nbsp;Hz, resolución angular 0.8°) hace un barrido completo por muestra; <code>sensado_muestras=5</code> lecturas consecutivas con el robot quieto.</p>
+      <p><b>3. Recorta 4 zonas angulares</b>, ángulo relativo al robot (0°=frente, +90°=izquierda):</p>
+      <ul>
+        <li>Frente: <b>[-5°, 5°]</b></li>
+        <li>Derecha: <b>[-110°, -70°]</b></li>
+        <li>Izquierda: <b>[70°, 110°]</b></li>
+        <li>Atrás: <b>[165°, 195°]</b></li>
+      </ul>
+      <p>Corregidas por el montaje de este robot: <b>front_offset_deg=180°</b>, <b>invert_left_right=false</b>. Esas 4 zonas relativas (frente/derecha/izquierda/atrás) se traducen a direcciones absolutas N/E/S/O según el heading actual del robot.</p>
+      <p><b>4. Marca "hay pared"</b> en una zona si la distancia mínima leída ahí es ≤ <b>umbral_pared_m = 0.20&nbsp;m</b> (mitad de una celda de 30&nbsp;cm + margen de seguridad de 5&nbsp;cm).</p>
+      <p><b>5. Valida por consenso:</b> una zona solo se confirma como pared si aparece en ≥3 de las 5 muestras (<code>sensado_consenso_minimo=3</code>) — una lectura aislada con ruido o desalineación no alcanza para contradecir al resto.</p>
+      <p>Ciclo de control del nodo: <b>20&nbsp;Hz</b> (control_rate_hz).</p>`
+  },
+  odom: {
+    title: 'Cierre de avance y giro — odometría',
+    html: `
+      <p>Fusión de los encoders de ambos motores (vía microROS en el ESP32-S3), publicada en <code>/odom_raw</code>.</p>
+      <p>El hardware real sobreestima tanto la distancia como el ángulo por un factor fijo, corregido con <b>factor_dist_odom=0.9474</b> y <b>factor_ang_odom=0.9899</b>.</p>
+      <p><b>Avance:</b> cierra los 30&nbsp;cm de cada celda contra esa distancia ya corregida; corrección continua en línea recta (kp_ángulo=2.2, kp_lateral=1.1, máx. angular=0.3&nbsp;rad/s) para no derivar del eje del pasillo.</p>
+      <p><b>Giro:</b> cierra contra el yaw <i>absoluto</i> de toda la misión (no relativo al giro anterior, para que el error angular no se acumule giro tras giro), con tolerancia ±3° sobre el objetivo y un piso mínimo de 4° realmente girados antes de aceptar el corte.</p>
+      <p>Retroalimentación extra: si el LiDAR frontal ya ve pared a ≤0.15&nbsp;m durante un avance, se corta ahí mismo sin importar cuánto marca el odómetro — la pared es una referencia física más confiable que la distancia acumulada.</p>`
+  },
+  cam: {
+    title: 'Detección de color — cámara HSV',
+    html: `
+      <p><b>1. Encuadre.</b> La cámara tiene 2 grados de libertad (2DOF, pan-tilt); se posiciona con los servos hacia adelante/arriba para encuadrar los carteles PARE/META montados en la pared, y captura el frame de <code>/image_raw</code> vía cv_bridge.</p>
+      <p><b>2. Recorte por franja</b> (antes de convertir a HSV — distinto según el color buscado):</p>
+      <ul>
+        <li>Rojo/amarillo: 100% del frame (<code>franja_inferior=1.0</code>) — el cartel PARE puede aparecer a cualquier altura según la distancia.</li>
+        <li>Verde: solo el <b>2/3 superior</b> (<code>franja_verde=0.667</code>) — excluye el piso/pista para evitar falsos verdes por reflejo.</li>
+      </ul>
+      <p><b>3. Umbral en HSV</b> (<code>cv2.inRange</code>):</p>
+      <ul>
+        <li>Rojo: H≤15 <i>o</i> H≥165 (el hue del rojo cruza el 0, se combinan 2 rangos con OR), S≥80, V≥50.</li>
+        <li>Verde: H 35–95 (verde sage/apagado del cartel, no saturado), S 40–255 (S_min bajo a propósito, agarra verde poco saturado sin colar blancos/grises), V 60–255.</li>
+      </ul>
+      <p><b>4. Limpieza morfológica:</b> <code>MORPH_OPEN</code> (quita motas sueltas) + <code>MORPH_CLOSE</code> (cierra huecos chicos), kernel 5×5.</p>
+      <p><b>5. Filtra por tamaño y forma:</b> descarta blobs por área (rojo 200–60&nbsp;000&nbsp;px; verde 600–150&nbsp;000&nbsp;px) y valida el contorno externo por relación de aspecto (rojo 0.5–2.0, compacto tipo cartel; verde 0.05–20, muy permisivo porque el cartel META puede verse parcialmente ocluido) y solidez (rojo ≥0.75; verde ≥0.35, más tolerante).</p>
+      <p><b>6. Confirmación anti-parpadeo:</b> exige <b>3 frames consecutivos</b> con detección antes de publicar <code>true</code> — un solo frame sin detección resetea el contador a 0 (estricto a propósito, prioriza rechazar destellos/reflejos).</p>
+      <p><b>7. Publica</b> <code>/pare_detectado</code> o <code>/verde_detectado</code> (booleano). El rojo además dispara un pitido de 150&nbsp;ms (cooldown de 5&nbsp;s compartido); el verde nunca pita, solo registra la celda meta una vez.</p>`
+  },
+  map: {
+    title: 'Construcción del grafo',
+    html: `
+      <p>Cada celda sensada agrega sus muros confirmados a <code>conocidos</code> — el mapa que el robot cree conocer hasta ese momento. Un muro todavía no sensado se asume <b>abierto</b> (optimista).</p>
+      <p>En cada celda, <b>flood fill</b> calcula la distancia BFS hacia el objetivo usando solo <code>conocidos</code>, y el robot avanza hacia la dirección abierta con menor distancia (desempate N&gt;E&gt;S&gt;O si hay más de una opción igual de buena).</p>
+      <p>Al llegar a la meta entra en <b>fase B</b>: corre un BFS sobre <code>conocidos</code> para hallar la ruta candidata y, si esa ruta pasa por alguna celda todavía no sensada, sigue explorando hasta cubrirla — así la ruta del intento 2 (speed run) queda <b>garantizada</b> como óptima, no solo probable.</p>`
+  },
+};
+
+/* =========================================================================
+   SIM RUNNER (shared logic for run1 / run2 panels)
+   ========================================================================= */
+function makeSimRunner(cfg){
+  // cfg: { svgId, sensorsId, decisionId, logId, statesId, playBtnId, stepBtnId, backBtnId, resetBtnId, speedId, progressId, fog, buildFn }
+  const svg = document.getElementById(cfg.svgId);
+  const sensorsEl = document.getElementById(cfg.sensorsId);
+  const decisionEl = document.getElementById(cfg.decisionId);
+  const logEl = document.getElementById(cfg.logId);
+  const statesEl = document.getElementById(cfg.statesId);
+  const progressEl = document.getElementById(cfg.progressId);
+  const speedEl = document.getElementById(cfg.speedId);
+
+  const STATES = cfg.states;
+  statesEl.innerHTML = STATES.map(s=>`<span class="state-chip" data-s="${s}">${s}</span>`).join('');
+
+  let frames = [];
+  let idx = -1;
+  let timer = null;
+  let base = null; // { g, wallEls }
+  let robotEl = null, trailEl = null, rayEls = null, senseRingEl = null;
+
+  function rebuild(){
+    stop();
+    frames = cfg.buildFn();
+    idx = -1;
+    base = buildBaseMaze(svg, { fog: cfg.fog });
+    drawMarkers(base.g, {});
+    trailEl = el('polyline', { points:'', class:'mz-trail' });
+    base.g.appendChild(trailEl);
+    rayEls = {};
+    for(const d of ['N','E','S','O']){
+      const line = el('line', { x1:0, y1:0, x2:0, y2:0, class:'lidar-ray' });
+      base.g.appendChild(line);
+      rayEls[d] = line;
+    }
+    senseRingEl = el('circle', { cx:0, cy:0, r:6, class:'mz-sense-ring' });
+    base.g.appendChild(senseRingEl);
+    robotEl = el('polygon', { points:'0,-13 10,10 -10,10', class:'mz-robot' });
+    base.g.appendChild(robotEl);
+    setTransitionSpeed();
+    robotEl.style.transition = 'none';
+    renderAt(0);
+    robotEl.getBoundingClientRect(); // force reflow so the transition:none takes effect before re-enabling
+    robotEl.style.transition = '';
+  }
+
+  function setTransitionSpeed(){
+    const ms = Number(speedEl.value);
+    svg.style.setProperty('--step-ms', ms+'ms');
+    const label = document.getElementById(cfg.speedId+'-label');
+    if(label) label.textContent = ms + ' ms';
+  }
+  speedEl.addEventListener('input', setTransitionSpeed);
+
+  const RAY_SHOW_TYPES = ['SENSAR','CAMARA','FASE_B','DECISION'];
+  function updateLidarRays(frame){
+    if(!frame || !frame.pos || !RAY_SHOW_TYPES.includes(frame.type)){
+      for(const d of ['N','E','S','O']) rayEls[d].classList.remove('show');
+      return;
+    }
+    const conocidos = frame.conocidos || new Set();
+    const [cx,cy] = centerSvg(frame.pos);
+    const len = 19;
+    for(const d of ['N','E','S','O']){
+      const [dx,dy] = DIRS[d];
+      const wallBool = wallBoolAt(frame.pos, d, conocidos);
+      const line = rayEls[d];
+      line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+      line.setAttribute('x2', cx+dx*len); line.setAttribute('y2', cy-dy*len);
+      line.style.stroke = wallBool ? 'var(--danger)' : 'var(--ok)';
+      line.classList.add('show');
+    }
+  }
+  function pulseSenseRing(frame){
+    if(!frame || frame.type !== 'SENSAR') return;
+    const [cx,cy] = centerSvg(frame.pos);
+    senseRingEl.setAttribute('cx', cx); senseRingEl.setAttribute('cy', cy);
+    senseRingEl.classList.remove('pulse');
+    void senseRingEl.getBoundingClientRect(); // reflow: restart the CSS animation
+    senseRingEl.classList.add('pulse');
+  }
+
+  function sensorCardsHTML(){
+    return `
+      <div class="sensor-card clickable" id="${cfg.svgId}-sc-lidar" data-mod="lidar">
+        <div class="sc-head"><b>Descubrir entorno</b><span class="sc-expand">▸</span></div>
+        <div class="compass" id="${cfg.svgId}-compass">
+          <i class="n"></i><i class="w"></i><i class="c"></i><i class="e"></i><i class="s"></i>
+        </div>
+      </div>
+      <div class="sensor-card clickable" id="${cfg.svgId}-sc-odom" data-mod="odom">
+        <div class="sc-head"><b>ODOM_RAW</b><span class="sc-expand">▸</span></div>
+        <div class="sc-val" id="${cfg.svgId}-odom-val">—</div>
+        <div class="sc-val muted" style="font-size:.68rem;" id="${cfg.svgId}-odom-heading">—</div>
+      </div>
+      <div class="sensor-card clickable" id="${cfg.svgId}-sc-cam" data-mod="cam">
+        <div class="sc-head"><b>Detección de color</b><span class="sc-expand">▸</span></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="cam-swatch" id="${cfg.svgId}-cam-swatch"></div>
+          <span class="sc-val" id="${cfg.svgId}-cam-val" style="font-size:.72rem;">sin color</span>
+        </div>
+      </div>
+      <div class="sensor-card clickable" id="${cfg.svgId}-sc-map" data-mod="map">
+        <div class="sc-head"><b>Grafo / mapa</b><span class="sc-expand">▸</span></div>
+        <div class="sc-val" id="${cfg.svgId}-map-val" style="font-size:.72rem;">—</div>
+      </div>`;
+  }
+  sensorsEl.innerHTML = sensorCardsHTML();
+
+  const detailEl2 = document.createElement('div');
+  detailEl2.className = 'sensor-detail';
+  detailEl2.id = cfg.svgId + '-sensor-detail';
+  sensorsEl.insertAdjacentElement('afterend', detailEl2);
+  sensorsEl.querySelectorAll('.sensor-card[data-mod]').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const mod = card.dataset.mod;
+      const wasOpen = card.classList.contains('expanded');
+      sensorsEl.querySelectorAll('.sensor-card').forEach(c=>{ c.classList.remove('expanded'); c.querySelector('.sc-expand').textContent='▸'; });
+      if(wasOpen){ detailEl2.classList.remove('open'); detailEl2.innerHTML=''; return; }
+      card.classList.add('expanded');
+      card.querySelector('.sc-expand').textContent='▾';
+      const d = SENSOR_DETAILS[mod];
+      detailEl2.innerHTML = `<h4>${d.title}</h4>${d.html}`;
+      detailEl2.classList.add('open');
+    });
+  });
+
+  function setActiveSensors(list){
+    ['lidar','odom','cam','map'].forEach(k=>{
+      const c = document.getElementById(cfg.svgId+'-sc-'+k);
+      if(c) c.classList.toggle('active-sensor', list.includes(k));
+    });
+  }
+  function setState(active){
+    statesEl.querySelectorAll('.state-chip').forEach(c=> c.classList.toggle('active', c.dataset.s===active));
+  }
+  function setCompass(zoneWalls){
+    const comp = document.getElementById(cfg.svgId+'-compass');
+    if(!comp) return;
+    comp.querySelectorAll('i').forEach(i=>{
+      i.classList.remove('wall','open');
+      const dir = { n:'front', w:'left', e:'right', s:'back' }; // placeholder, replaced below
+    });
+    const map = { N:'n', E:'e', S:'s', O:'w' };
+    for(const d of ['N','E','S','O']){
+      const cls = comp.querySelector('.'+map[d]);
+      if(!cls) continue;
+      if(zoneWalls[d] === true) cls.classList.add('wall');
+      else if(zoneWalls[d] === false) cls.classList.add('open');
+    }
+  }
+  function zoneWallsAt(pos, conocidos){
+    const out = {};
+    for(const [n,d] of vecinos(pos)){
+      const w = wallKey(pos,n);
+      out[d] = conocidos.has(w) ? state.walls.has(w) : null;
+    }
+    return out;
+  }
+
+  function odomText(pos){
+    const xcm = (pos[0]*30+15), ycm=(pos[1]*30+15);
+    return `x=${xcm}cm  y=${ycm}cm`;
+  }
+
+  function updateWalls(conocidos){
+    if(!cfg.fog) return;
+    for(const key in base.wallEls){
+      const line = base.wallEls[key];
+      line.classList.toggle('discovered', conocidos.has(key));
+      line.classList.toggle('undiscovered', !conocidos.has(key));
+    }
+  }
+
+  function placeRobot(pos, heading){
+    const [cx,cy] = centerSvg(pos);
+    const ang = { N:0, E:90, S:180, O:270 }[heading];
+    robotEl.setAttribute('transform', `translate(${cx},${cy}) rotate(${ang})`);
+  }
+
+  function pushTrail(points){
+    const pts = points.map(p=>{ const [x,y]=centerSvg(p); return x+','+y; }).join(' ');
+    trailEl.setAttribute('points', pts);
+  }
+
+  function logLine(cls, label, text){
+    const line = document.createElement('div');
+    line.className = 'lg tag-'+cls;
+    line.innerHTML = `<b>${label}</b> ${text}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function decisionTable(frame){
+    if(frame.type !== 'DECISION'){ return; }
+    const sorted = frame.opciones.slice().sort((a,b)=>a.dv-b.dv || a.ti-b.ti);
+    const rows = sorted.map((o,i)=>{
+      const chosen = o===frame.elegida;
+      return `<tr class="${chosen?'chosen':''}" data-oi="${i}"><td>${o.d} → ${nombre(o.n)}</td><td class="num">${o.dv===Infinity?'∞':o.dv}</td><td>${chosen?'✓ elegida':''}</td></tr>`;
+    }).join('');
+    decisionEl.innerHTML = `<table><tbody><tr><th>Opción</th><th class="num">Dist. flood</th><th></th></tr>${rows}</tbody></table>
+      <p class="decision-hint">Click en una opción para ver cómo la ejecutaría el robot.</p>
+      <div class="decision-detail" id="${cfg.svgId}-detail"></div>`;
+    const detailEl = document.getElementById(cfg.svgId+'-detail');
+    decisionEl.querySelectorAll('tr[data-oi]').forEach(tr=>{
+      tr.addEventListener('click', ()=>{
+        const already = tr.classList.contains('open');
+        decisionEl.querySelectorAll('tr[data-oi]').forEach(r=>r.classList.remove('open'));
+        if(already){ detailEl.classList.remove('open'); detailEl.innerHTML=''; return; }
+        tr.classList.add('open');
+        const o = sorted[Number(tr.dataset.oi)];
+        const lado = ladoParaGirar(frame.heading, o.d);
+        detailEl.innerHTML = actionDetailHTML(lado, o);
+        detailEl.classList.add('open');
+      });
+    });
+  }
+
+  function renderAt(i){
+    idx = Math.max(0, Math.min(i, frames.length-1));
+    // recompute cumulative log + trail + walls from scratch up to idx (robust, cheap)
+    logEl.innerHTML = '';
+    const visited = [];
+    let lastConocidos = new Set();
+    let lastFrame = null;
+    for(let k=0;k<=idx;k++){
+      const f = frames[k];
+      lastFrame = f;
+      if(f.conocidos) lastConocidos = f.conocidos;
+      emitLog(f);
+      if(f.pos) visited.push(f.pos);
+      if(f.to) visited.push(f.to);
+    }
+    updateWalls(lastConocidos);
+    pushTrail(visited.length ? visited : [state.start]);
+    applyFrameToUI(lastFrame, lastConocidos);
+    updateLidarRays(lastFrame);
+    pulseSenseRing(lastFrame);
+    progressEl.style.width = (100*(idx+1)/frames.length)+'%';
+  }
+
+  function emitLog(f){
+    switch(f.type){
+      case 'INICIO': logLine('INICIO','INICIO', `celda=${nombre(f.pos)} heading=${f.heading} meta=${nombre(state.goal)}`); break;
+      case 'SENSAR': logLine('SENSAR','SENSADO', `celda=${nombre(f.pos)} muros_nuevos=${f.nuevos.length?f.nuevos.join(','):'ninguno'} sensadas=${f.sensadasCount}/${MZ.cols*MZ.rows}`); break;
+      case 'CAMARA': logLine('CAMARA','CAMARA', f.color ? `celda=${nombre(f.pos)} color=${f.color.toUpperCase()} → ${f.color==='verde'?'META confirmada':'PARE marcado'}` : `celda=${nombre(f.pos)} sin color relevante`); break;
+      case 'FASE_B': logLine('DECISION','FASE_B', `llegó a la meta — verificando cobertura de la ruta óptima`); break;
+      case 'DECISION': logLine('DECISION','DECISION', `fase=${f.fase} opciones=[${f.opciones.map(o=>`${o.d}→${nombre(o.n)}:${o.dv===Infinity?'∞':o.dv}`).join(', ')}] elegida=${f.elegida.d}→${nombre(f.elegida.n)}`); break;
+      case 'GIRO': logLine('GIRO','GIRO', `${f.lado}`); break;
+      case 'GIRO_FIN': logLine('GIRO_FIN','GIRO_FIN', `heading=${f.heading}`); break;
+      case 'AVANCE_INICIO': logLine('AVANCE','AVANZAR', `${nombre(f.from)} → ${nombre(f.to)} (${f.dir}), 30 cm por odometría`); break;
+      case 'AVANCE_FIN': logLine('AVANCE','AVANCE_FIN', `celda=${nombre(f.pos)}`); break;
+      case 'TERMINO': logLine('TERMINO','TERMINADO', f.segmentos!==undefined ? `movimientos=${f.movimientos} segmentos=${f.segmentos}` : `movimientos=${f.movimientos} sensadas=${f.sensadasCount}/${f.total}`); break;
+      case 'ABORTO': logLine('TERMINO','ABORTADO', f.motivo); break;
+      case 'TRAMO_INICIO': logLine('AVANCE','AVANZAR', `tramo ${f.dir}, ${f.celdas} celdas (${f.celdas*30} cm) ${nombre(f.from)}→${nombre(f.to)}, sin pausas` + (f.crossed.length? ` — cruza ${f.crossed.map(c=>c.color.toUpperCase()+'@'+nombre(c.cell)).join(', ')}`:'')); break;
+      case 'TRAMO_FIN': logLine('AVANCE','TRAMO_FIN', `celda=${nombre(f.pos)}`); break;
+    }
+  }
+
+  function applyFrameToUI(f, conocidos){
+    if(!f) return;
+    placeRobot(f.pos || f.to || state.start, f.heading || 'N');
+    document.getElementById(cfg.svgId+'-odom-val').textContent = odomText(f.pos || f.to || state.start);
+    document.getElementById(cfg.svgId+'-odom-heading').textContent = 'heading='+(f.heading||'N');
+    document.getElementById(cfg.svgId+'-map-val').textContent = cfg.fog
+      ? `${conocidos.size} muros conocidos`
+      : `mapa completo (verificado en fase B)`;
+
+    let sensors = [];
+    let stateChip = STATES[0];
+    let camColor = null, camText = 'sin color';
+
+    switch(f.type){
+      case 'INICIO': stateChip='INICIAR'; sensors=['odom']; break;
+      case 'SENSAR': stateChip='VALIDANDO_CELDA'; sensors=['lidar']; setCompass(zoneWallsAt(f.pos, conocidos)); break;
+      case 'CAMARA': stateChip='DECIDIR'; sensors=['cam']; camColor=f.color; camText = f.color? (f.color==='verde'?'META (verde)':'PARE (rojo)') : 'sin color relevante'; break;
+      case 'FASE_B': stateChip='DECIDIR'; sensors=['map']; break;
+      case 'DECISION': stateChip='DECIDIR'; sensors=['lidar','map']; decisionTable(f); break;
+      case 'GIRO': stateChip='PAUSA_GIRO'; sensors=['odom']; break;
+      case 'GIRO_FIN': stateChip='GIRAR'; sensors=['odom']; break;
+      case 'AVANCE_INICIO': case 'TRAMO_INICIO': stateChip='AVANZAR'; sensors=['odom']; break;
+      case 'AVANCE_FIN': case 'TRAMO_FIN': stateChip='PAUSA_CELDA'; sensors=['odom']; break;
+      case 'TERMINO': stateChip='TERMINADO'; sensors=[]; break;
+      case 'ABORTO': stateChip='TERMINADO'; sensors=[]; break;
+    }
+    setState(stateChip);
+    setActiveSensors(sensors);
+    const sw = document.getElementById(cfg.svgId+'-cam-swatch');
+    sw.className = 'cam-swatch' + (camColor? ' '+camColor : '');
+    document.getElementById(cfg.svgId+'-cam-val').textContent = camText;
+  }
+
+  function play(){
+    if(timer) return;
+    document.getElementById(cfg.playBtnId).textContent = '⏸ Pausa';
+    timer = setInterval(()=>{
+      if(idx >= frames.length-1){ stop(); return; }
+      renderAt(idx+1);
+    }, Number(speedEl.value));
+  }
+  function stop(){
+    if(timer){ clearInterval(timer); timer=null; }
+    document.getElementById(cfg.playBtnId).textContent = '▶ Reproducir';
+  }
+  function toggle(){ timer ? stop() : play(); }
+
+  document.getElementById(cfg.playBtnId).addEventListener('click', toggle);
+  document.getElementById(cfg.stepBtnId).addEventListener('click', ()=>{ stop(); renderAt(idx+1); });
+  document.getElementById(cfg.backBtnId).addEventListener('click', ()=>{ stop(); renderAt(idx-1); });
+  document.getElementById(cfg.resetBtnId).addEventListener('click', ()=>{ rebuild(); });
+
+  return { rebuild, stop };
+}
+
+const STATES_R1 = ['INICIAR','PAUSA_CELDA','VALIDANDO_CELDA','DECIDIR','PAUSA_GIRO','GIRAR','AVANZAR','TERMINADO'];
+const STATES_R2 = ['INICIO','DECIDIR_SEGMENTO','PAUSA_GIRO','GIRAR','AVANZAR','TERMINADO'];
+
+const run1 = makeSimRunner({
+  svgId:'run1-svg', sensorsId:'r1-sensors', decisionId:'r1-decision', logId:'r1-log', statesId:'r1-states',
+  playBtnId:'r1-play', stepBtnId:'r1-step', backBtnId:'r1-back', resetBtnId:'r1-reset', speedId:'r1-speed', progressId:'r1-progress',
+  fog:true, states: STATES_R1,
+  buildFn: ()=> buildExplorerTimeline(state.start, state.goal, state.reds)
+});
+const run2 = makeSimRunner({
+  svgId:'run2-svg', sensorsId:'r2-sensors', decisionId:'r2-decision', logId:'r2-log', statesId:'r2-states',
+  playBtnId:'r2-play', stepBtnId:'r2-step', backBtnId:'r2-back', resetBtnId:'r2-reset', speedId:'r2-speed', progressId:'r2-progress',
+  fog:false, states: STATES_R2,
+  buildFn: ()=> buildSpeedrunTimeline(state.start, state.goal, state.reds)
+});
+
+/* =========================================================================
+   SLIDE NAVIGATION
+   ========================================================================= */
+const slideEls = Array.from(document.querySelectorAll('.slide'));
+const titles = ['Carátula','Mapa','Propiedades del robot','Descripción del reto','Solución — Arquitectura','Recorrido 1 — Exploración','Recorrido 2 — Speed run','Evidencias'];
+let current = -1;
+
+const dotsWrap = document.getElementById('nav-dots');
+slideEls.forEach((_,i)=>{
+  const b = document.createElement('button');
+  b.addEventListener('click', ()=> goTo(i));
+  dotsWrap.appendChild(b);
+});
+
+function goTo(i){
+  i = Math.max(0, Math.min(i, slideEls.length-1));
+  if(i === current){ return; }
+  slideEls.forEach(s=> s.classList.remove('active'));
+  current = i;
+  slideEls[current].classList.add('active');
+  Array.from(dotsWrap.children).forEach((d,k)=> d.classList.toggle('active', k===current));
+  document.getElementById('nav-title').textContent = titles[current];
+  document.getElementById('topbar-slide').textContent = String(current+1).padStart(2,'0')+' / '+String(slideEls.length).padStart(2,'0');
+  document.getElementById('progress').style.width = (100*(current+1)/slideEls.length)+'%';
+
+  if(slideEls[current].id === 's-map') renderMapSlide();
+  if(slideEls[current].id === 's-run1') run1.rebuild();
+  if(slideEls[current].id === 's-run2'){
+    run2.rebuild();
+    const f = buildSpeedrunTimeline(state.start, state.goal, state.reds);
+    const term = f.find(x=>x.type==='TERMINO');
+    if(term){ document.getElementById('evi-r2-mov').textContent = term.movimientos; }
+  }
+  if(slideEls[current].id === 's-evidence'){
+    const ef = buildExplorerTimeline(state.start, state.goal, state.reds);
+    const t = ef.find(x=>x.type==='TERMINO');
+    if(t){ document.getElementById('evi-r1-mov').textContent = t.movimientos; document.getElementById('evi-sensadas').textContent = t.sensadasCount+'/'+t.total; }
+  }
+}
+
+document.getElementById('nav-prev').addEventListener('click', ()=> goTo(current-1));
+document.getElementById('nav-next').addEventListener('click', ()=> goTo(current+1));
+window.addEventListener('keydown', (e)=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); goTo(current+1); }
+  else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); goTo(current-1); }
+  else if(e.key==='Home'){ goTo(0); }
+  else if(e.key==='End'){ goTo(slideEls.length-1); }
+});
+
+window.addEventListener('hashchange', ()=>{
+  const n = Number(location.hash.replace('#',''));
+  if(!Number.isNaN(n)) goTo(n-1);
+});
+
+// initial paint
+const initialHash = Number(location.hash.replace('#',''));
+goTo(!Number.isNaN(initialHash) ? initialHash-1 : 0);
+renderMapSlide();
+</script>
+</body>
+</html>
