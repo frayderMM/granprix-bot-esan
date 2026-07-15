@@ -303,6 +303,55 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 .bullets li p{ font-size:.92rem; }
 .bullets li b{ display:block; font-size:.95rem; margin-bottom:2px; }
 
+/* ---------- project documentation slides ---------- */
+.doc-layout{ display:grid; grid-template-columns:.9fr 1.1fr; gap:20px; flex:1 1 auto; min-height:0; }
+.doc-layout.wide-visual{ grid-template-columns:.72fr 1.28fr; }
+.doc-stack{ display:flex; flex-direction:column; gap:12px; min-height:0; }
+.doc-card{ padding:14px 16px; }
+.doc-card h3{ margin-bottom:8px; color:var(--accent-2); }
+.doc-card p,.doc-card li{ font-size:.78rem; line-height:1.48; }
+.doc-card ul{ margin:0; padding-left:18px; }
+.doc-card li+li{ margin-top:5px; }
+.doc-code{ margin:0; padding:16px 18px; overflow:auto; white-space:pre; font:clamp(.58rem,1.05vw,.76rem)/1.55 var(--font-display); color:var(--muted); background:var(--bg-inset); border:1px solid var(--line); border-radius:var(--radius); }
+.doc-code b{ color:var(--accent); font-weight:700; }
+.doc-media{ position:relative; min-height:0; overflow:hidden; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg-panel); padding:10px; display:flex; flex-direction:column; gap:8px; }
+.doc-media img{ width:100%; height:100%; min-height:0; object-fit:contain; border-radius:8px; cursor:zoom-in; }
+.doc-media figcaption{ color:var(--muted-2); font-size:.7rem; text-align:center; flex:0 0 auto; }
+.camera-pair{ display:grid; grid-template-columns:1fr 1fr; gap:10px; min-height:0; flex:1 1 auto; }
+.camera-pair figure{ margin:0; display:flex; flex-direction:column; min-height:0; gap:6px; }
+.camera-pair img{ flex:1 1 auto; object-fit:cover; }
+.mini-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.mini-stat{ padding:9px 10px; background:var(--bg-inset); border:1px solid var(--line); border-radius:8px; }
+.mini-stat b{ display:block; color:var(--accent); font:700 .74rem var(--font-display); margin-bottom:2px; }
+.mini-stat span{ color:var(--muted); font-size:.66rem; line-height:1.3; display:block; }
+.region-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px 18px; }
+.region-grid p{ margin:0; color:var(--muted); font-size:.72rem; }
+.region-grid b{ color:var(--accent); font-family:var(--font-display); }
+.flow-diagram{ display:flex; flex-direction:column; gap:16px; flex:1 1 auto; justify-content:center; }
+.flow-row{ display:grid; grid-template-columns:1.06fr 42px 1.06fr 42px 1.16fr 42px .92fr; align-items:stretch; gap:6px; min-width:0; }
+.flow-node{ display:flex; flex-direction:column; justify-content:center; gap:7px; min-height:148px; min-width:0; padding:13px 11px; text-align:center; overflow-wrap:anywhere; }
+.flow-node h3{ color:var(--accent-2); }
+.flow-node p{ font-size:.68rem; line-height:1.42; color:var(--muted); }
+.flow-node code{ color:var(--accent); }
+.flow-arrow{ display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--accent); font:700 1.7rem var(--font-display); }
+.flow-arrow small{ color:var(--muted-2); font:500 .56rem var(--font-display); text-align:center; line-height:1.25; margin-bottom:4px; }
+.flow-branch{ display:grid; grid-template-columns:1.12fr 42px 1.12fr 42px 1fr; width:72%; align-self:flex-end; align-items:stretch; gap:6px; min-width:0; }
+.flow-branch .flow-node{ min-height:118px; }
+.state-flow{ display:flex; flex-direction:column; gap:5px; min-height:0; }
+.state-step{ padding:9px 13px; text-align:center; }
+.state-step h3{ font-size:.83rem; color:var(--accent-2); margin-bottom:3px; }
+.state-step p{ font-size:.7rem; line-height:1.35; color:var(--muted); }
+.state-down{ text-align:center; color:var(--accent); font:700 1.05rem var(--font-display); line-height:1; }
+.state-decisions{ display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+.state-decision{ padding:7px 6px; border:1px solid var(--line); border-radius:7px; background:var(--bg-inset); text-align:center; font-size:.61rem; line-height:1.3; color:var(--muted); }
+.state-decision b{ color:var(--accent); display:block; }
+.state-loop{ color:var(--accent); font:600 .64rem var(--font-display); text-align:center; }
+.bfs-flow{ display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; }
+.bfs-step{ padding:7px 9px; border:1px solid var(--line); border-radius:7px; background:var(--bg-inset); text-align:center; min-width:105px; }
+.bfs-step b{ display:block; color:var(--accent); font:700 .66rem var(--font-display); }
+.bfs-step span{ color:var(--muted); font-size:.61rem; }
+.bfs-arrow{ color:var(--accent); font:700 1rem var(--font-display); }
+
 /* ---------- robot spec cards ---------- */
 .spec-card{ display:flex; flex-direction:column; gap:8px; }
 .spec-card .spec-head{ display:flex; align-items:center; gap:10px; }
@@ -384,12 +433,14 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 .log-panel::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:4px; }
 
 @media (max-width: 980px){
-  .cover-grid, .map-layout, .two-col, .sim-layout{ grid-template-columns:1fr; }
+  .cover-grid, .map-layout, .two-col, .sim-layout, .doc-layout{ grid-template-columns:1fr; }
   .stat-row, .three-col, .sensor-cards{ grid-template-columns:repeat(2,1fr); }
+  .flow-row, .flow-branch{ display:flex; flex-direction:column; width:100%; }
+  .flow-arrow{ transform:rotate(90deg); min-height:34px; }
 }
 
 /* ---------- clickable photos + lightbox ---------- */
-.cover-photo img, .photo-card img, .evi-slot.filled img, .chart-card img, .modal-body .sd-photo{
+.cover-photo img, .photo-card img, .doc-media img, .evi-slot.filled img, .chart-card img, .modal-body .sd-photo{
   cursor:zoom-in;
 }
 .lightbox{ display:none; position:fixed; inset:0; z-index:999; background:rgba(4,9,18,.94); }
@@ -452,7 +503,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
 <div class="progress" id="progress" style="width:0%"></div>
 <div class="topbar">
   <div class="brand"><span class="dot"></span> ROBÓTICA · ESAN · RETO FINAL</div>
-  <div id="topbar-slide">01 / 08</div>
+  <div id="topbar-slide">01 / 12</div>
 </div>
 
 <div class="deck">
@@ -491,7 +542,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
     <!-- ============ 1. MAPA ============ -->
     <section class="slide" id="s-map">
       <div class="slide-head">
-        <div class="kicker-row"><span class="eyebrow">02 · La pista</span></div>
+        <div class="kicker-row"><span class="eyebrow">09 · La pista · Demo</span></div>
         <h2>Laberinto 12×8 — celdas de 30×30&nbsp;cm</h2>
         <p class="lead">3.6&nbsp;m × 2.4&nbsp;m en total. El robot arranca sin conocer ningún muro interno; solo conoce el tamaño de la grilla, su celda de inicio y su heading inicial (N).</p>
       </div>
@@ -526,10 +577,265 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
       </div>
     </section>
 
-    <!-- ============ 2. PROPIEDADES DEL ROBOT ============ -->
+    <!-- ============ 3. ESTRUCTURA DEL PROYECTO ============ -->
+    <section class="slide" id="s-project-structure">
+      <div class="slide-head">
+        <span class="eyebrow">02 · Arquitectura</span>
+        <h2>Estructura del proyecto ROS 2</h2>
+        <p class="lead">Archivos del paquete y las tres etapas principales del proyecto.</p>
+      </div>
+      <div class="doc-layout">
+        <pre class="doc-code"><b>reto-final-ultra/</b>
+├── README.md
+└── <b>capytown_G0_granprix/</b>
+    ├── package.xml
+    ├── setup.py / setup.cfg
+    ├── <b>capytown_g0_granprix/</b>
+    │   ├── maze_solver.py
+    │   ├── pare_detector.py
+    │   ├── visualizador_web.py
+    │   ├── metrics_logger.py
+    │   ├── motion_lidar.py
+    │   ├── motion_geometry.py
+    │   ├── motion_grid.py
+    │   ├── motion_ruta.py
+    │   └── motion_events.py
+    ├── <b>config/</b>
+    │   ├── navegacion_params.yaml
+    │   ├── pare_params.yaml
+    │   └── metricas_params.yaml
+    ├── <b>launch/</b>
+    │   ├── solo_camara.launch.py
+    │   └── visualizacion.launch.py
+    └── <b>web/</b> index.html</pre>
+        <div class="doc-stack" style="justify-content:center;">
+          <div class="card doc-card" style="padding:28px;text-align:center;"><h3 style="font-size:1.3rem;margin:0;">01 · MAPEO</h3></div>
+          <div class="state-down">↓</div>
+          <div class="card doc-card" style="padding:28px;text-align:center;"><h3 style="font-size:1.3rem;margin:0;">02 · MEJOR RUTA</h3></div>
+          <div class="state-down">↓</div>
+          <div class="card doc-card" style="padding:28px;text-align:center;"><h3 style="font-size:1.3rem;margin:0;">03 · MÉTRICAS</h3></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. CÁMARA ============ -->
+    <section class="slide" id="s-camera-config">
+      <div class="slide-head">
+        <span class="eyebrow">03 · Cámara</span>
+        <h2>Detección HSV: PARE rojo y META verde</h2>
+        <p class="lead">La cámara USB confirma cada color durante 3 cuadros antes de generar un evento ROS 2.</p>
+      </div>
+      <div class="doc-layout wide-visual">
+        <div class="doc-stack">
+          <div class="card doc-card"><h3>Captura calibrada</h3><ul><li><b>640×480 · 30 FPS · YUYV</b></li><li><code>/dev/video0 → /image_raw</code></li><li>Servos: S1=0°, S2=-5°</li><li>Conversión BGR → HSV con OpenCV</li></ul></div>
+          <div class="card doc-card"><h3>Rojo · PARE</h3><p>H=0–10 o 170–179 · S≥100 · V≥70. Área 600–60 000 px², aspecto 0.5–2.0 y solidez ≥0.75. Al confirmar: freno de 5 s.</p></div>
+          <div class="card doc-card"><h3>Verde · META</h3><p>H=35–95 · S≥40 · V≥60. Se analiza el 66.67% superior; área 600–150 000 px² y solidez ≥0.35.</p></div>
+          <div class="card doc-card"><h3>Filtro común</h3><p>Apertura+cierre morfológico 5×5, componentes conectados, contorno mayor y confirmación temporal. También detecta amarillo H=20–35.</p></div>
+        </div>
+        <div class="doc-media">
+          <div class="camera-pair">
+            <figure><img src="img/detectarojo.jpeg" alt="Cámara detectando señal PARE roja"><figcaption>PARE rojo confirmado</figcaption></figure>
+            <figure><img src="img/detectarverdemeta.jpeg" alt="Cámara detectando meta verde"><figcaption>META verde confirmada</figcaption></figure>
+          </div>
+          <figcaption>Las cajas y etiquetas provienen de <code>/pare/debug_image</code>.</figcaption>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5. LIDAR ============ -->
+    <section class="slide" id="s-lidar-config">
+      <div class="slide-head">
+        <span class="eyebrow">04 · LiDAR</span>
+        <h2>Métricas de detección LiDAR</h2>
+        <p class="lead">Distancias y filtros del escaneo: X = frente/atrás, Y = izquierda/derecha.</p>
+      </div>
+      <div class="doc-layout">
+        <div class="doc-stack">
+          <div class="card doc-card"><h3>Puntos de pared</h3><p>Solo se usan lecturas válidas a <b>1.40 m o menos</b>. Cada distancia se convierte a una posición <code>(x,y)</code>.</p></div>
+          <div class="card doc-card"><h3>Agrupar y unir</h3><p><b>±4 cm</b> de tolerancia para agrupar · <b>≤9 cm</b> entre puntos consecutivos · mínimo <b>5 puntos</b> por pared.</p></div>
+          <div class="card doc-card"><h3>Pintado</h3><p>Los puntos ordenados se conectan y la pared se dibuja en <b style="color:#00cfe8">color cian</b> sobre el radar y el mapa.</p></div>
+          <div class="card doc-card">
+            <h3>Regiones de medición</h3>
+            <div class="region-grid">
+              <p><b>F · FRONTAL</b> — x &gt; 3 cm · ±12 cm</p>
+              <p><b>I · IZQUIERDA</b> — y &gt; 3 cm · ±12 cm</p>
+              <p><b>D · DERECHA</b> — y &lt; −3 cm · ±12 cm</p>
+              <p><b>A · ATRÁS</b> — x &lt; −3 cm · ±12 cm</p>
+            </div>
+          </div>
+        </div>
+        <figure class="doc-media"><img src="img/lidarfuncionamiento.jpeg" alt="Radar LiDAR mostrando paredes y distancias"><figcaption>Radar en marco del robot: F frente, I izquierda, D derecha y A atrás.</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ 6. MAPA COMPLETO ============ -->
+    <section class="slide" id="s-system-map">
+      <div class="slide-head">
+        <span class="eyebrow">05 · Sistema completo</span>
+        <h2>Cámara + LiDAR + odometría + mapa</h2>
+        <p class="lead">La web transforma la pista, los giros y la odometría en una vista común de 12×8 celdas.</p>
+      </div>
+      <div class="doc-layout wide-visual">
+        <div class="doc-stack">
+          <div class="card doc-card"><h3>1 · Sistema de coordenadas</h3><p>Grilla <b>12×8</b>, celda=<b>0.30 m</b> y origen visual en A8: <code>(0.5, 7.5)</code>. Los muros son segmentos <code>[x1,y1,x2,y2]</code>.</p></div>
+          <div class="card doc-card"><h3>2 · Odometría → distancia</h3><p>Entre mensajes se calcula <code>paso=√(Δx²+Δy²)×0.9474</code>. El signo indica avance o retroceso.</p></div>
+          <div class="card doc-card"><h3>3 · Distancia → posición del mapa</h3><p>Se obtiene el yaw relativo ×<b>0.9899</b> y el rumbo <code>(−sin(yaw),−cos(yaw))</code>. Luego: <code>posición += rumbo×paso/0.30</code>.</p></div>
+          <div class="card doc-card"><h3>4 · Cómo se pinta</h3><p>Durante el mapeo, cada giro físico confirma un vértice y revela el siguiente tramo en cian/azul. En la ruta final el icono usa la posición transformada de <code>/odom_raw</code>.</p></div>
+        </div>
+        <figure class="doc-media"><img src="img/mapeolidarymapa.jpeg" alt="Visualizador con cámara, LiDAR y mapa completo"><figcaption>Panel real: cámara en vivo, LiDAR en marco robot y pista 12×8.</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ 6. FLUJO DE DATOS ============ -->
+    <section class="slide" id="s-data-flow">
+      <div class="slide-head">
+        <span class="eyebrow">06 · Flujo de datos</span>
+        <h2>Qué datos recibe y envía cada nodo</h2>
+        <p class="lead">Cada flecha indica el contenido real que viaja por los tópicos ROS 2.</p>
+      </div>
+      <div class="flow-diagram">
+        <div class="flow-row">
+          <div class="card flow-node">
+            <h3>1 · Sensores</h3>
+            <p><b>Cámara:</b> imagen, ancho, alto y encoding<br><b>LiDAR:</b> <code>ranges[]</code>, ángulo inicial/incremento y rango válido<br><b>Odom:</b> posición X/Y + quaternion<br><b>IMU:</b> velocidad angular Z</p>
+          </div>
+          <div class="flow-arrow"><small>Image<br>LaserScan<br>Odom · Imu</small>→</div>
+          <div class="card flow-node">
+            <h3>2 · Percepción</h3>
+            <p><code>pare_detector.py</code><br>PARE, verde y amarillo: <b>true/false</b> + área roja + imagen marcada<br><code>motion_lidar.py</code><br>distancia frente/izq./der. + ángulo y distancia de pared</p>
+          </div>
+          <div class="flow-arrow"><small>Bool de color<br>distancias<br>pared</small>→</div>
+          <div class="card flow-node">
+            <h3>3 · Decisión</h3>
+            <p><code>maze_solver.py</code><br>combina zonas LiDAR, X/Y/yaw, giro IMU y colores. Produce estado, giro elegido y velocidades objetivo.</p>
+          </div>
+          <div class="flow-arrow"><small>Twist<br>linear.x<br>angular.z</small>→</div>
+          <div class="card flow-node">
+            <h3>4 · Carrito</h3>
+            <p><code>/cmd_vel</code><br><b>linear.x:</b> avance/retroceso en m/s<br><b>angular.z:</b> giro en rad/s</p>
+          </div>
+        </div>
+
+        <div class="flow-branch">
+          <div class="card flow-node">
+            <h3>Estado del control</h3>
+            <p><code>/maze/estado</code>: estado actual<br><code>/maze/metricas</code>: v, w, distancias, tiempo, longitud, colisiones y PARE<br><code>/robot_event</code>: tipo + detalle</p>
+          </div>
+          <div class="flow-arrow"><small>se<br>distribuye</small>→</div>
+          <div class="card flow-node">
+            <h3>Visualización</h3>
+            <p><code>visualizador_web.py</code><br>combina posición, rumbo, LiDAR, cámara, ruta y señales → JSON HTTP <code>:8080/data</code> → mapa web</p>
+          </div>
+          <div class="flow-arrow"><small>y se<br>guarda</small>→</div>
+          <div class="card flow-node">
+            <h3>Métricas</h3>
+            <p><code>metrics_logger.py</code><br>ronda, fecha, llegada, tiempo, ruta, eficiencia, colisiones y PARE → archivo CSV</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 7. RECORRIDO Y ESTADOS ============ -->
+    <section class="slide" id="s-route-colors">
+      <div class="slide-head">
+        <span class="eyebrow">07 · Flujo lógico</span>
+        <h2>Estados del carrito durante el mapeo</h2>
+        <p class="lead">La máquina de estados decide cuándo avanzar, detenerse, verificar la pared y girar.</p>
+      </div>
+      <div class="doc-layout wide-visual">
+        <div class="state-flow">
+          <div class="card state-step"><h3>INICIAR</h3><p>Espera LiDAR + odometría e inicia las métricas.</p></div>
+          <div class="state-down">↓</div>
+          <div class="card state-step"><h3>AVANZAR_PARALELO</h3><p>Sigue la pared. Apertura izquierda confirmada → gira; tras 0.12 m o frente bloqueado → verifica.</p></div>
+          <div class="state-down">↓</div>
+          <div class="card state-step"><h3>PAUSA_CHEQUEO_PARED · 0.5 s</h3><p>Se detiene, vuelve a leer el LiDAR y elige una salida.</p></div>
+          <div class="state-down">↓ decisión</div>
+          <div class="state-decisions">
+            <div class="state-decision"><b>Lado libre</b>GIRAR 90° izquierda</div>
+            <div class="state-decision"><b>Frente bloqueado</b>GIRAR 90° derecha</div>
+            <div class="state-decision"><b>Camino estable</b>seguir avanzando</div>
+          </div>
+          <div class="state-down">↓</div>
+          <div class="card state-step"><h3>GIRAR → AVANCE_GIRO_VACIO</h3><p>Completa el giro, avanza 0.10 m si entró a una apertura y vuelve al seguimiento.</p></div>
+          <div class="state-loop">↺ REGRESA A AVANZAR_PARALELO</div>
+          <div class="card state-step"><h3>Interrupciones y eventos</h3><p><b>FRENO_PARE:</b> pausa 5 s y retoma · <b>Recuperación:</b> retrocede/avanza y retoma · <b>META verde:</b> registra la llegada.</p></div>
+        </div>
+        <figure class="doc-media"><img src="img/mapeohastametamasrojos.jpeg" alt="Mapa del recorrido con señales PARE y meta"><figcaption>Flujo del mapeo: inicio, tramos confirmados, eventos PARE y META.</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ 8. MEJOR RECORRIDO ============ -->
+    <section class="slide" id="s-best-route">
+      <div class="slide-head">
+        <span class="eyebrow">08 · Mejor recorrido</span>
+        <h2>BFS y ruta final: cuatro tramos</h2>
+        <p class="lead">BFS obtiene el camino más corto desde A7 hasta META; luego el robot lo ejecuta con LiDAR y odometría.</p>
+      </div>
+      <div class="two-col">
+        <div class="doc-stack">
+          <div class="card doc-card" style="order:2;"><h3>Ruta obtenida por BFS</h3><p><b>1.</b> Recto 1.02 m<br><b>2.</b> Derecha 90° + 1.02 m<br><b>3.</b> Izquierda 90° + 0.55 m<br><b>4.</b> Derecha 90° + hasta 1.85 m o META verde</p></div>
+          <div class="card doc-card" style="order:1;"><h3>Lógica general · BFS</h3>
+            <div class="bfs-flow">
+              <div class="bfs-step"><b>MAPA</b><span>celdas + muros</span></div><i class="bfs-arrow">→</i>
+              <div class="bfs-step"><b>GRAFO</b><span>vecinos libres</span></div><i class="bfs-arrow">→</i>
+              <div class="bfs-step"><b>BFS</b><span>cola desde A7</span></div><i class="bfs-arrow">→</i>
+              <div class="bfs-step"><b>META</b><span>reconstruir padres</span></div><i class="bfs-arrow">→</i>
+              <div class="bfs-step"><b>4 TRAMOS</b><span>comprimir + calibrar</span></div>
+            </div>
+          </div>
+          <div class="card doc-card" style="order:3;"><h3>Cómo se ejecuta</h3><p><code>ESPERA_RUTA → SEGUIR_RUTA</code>. El robot reproduce la salida de BFS alternando <b>GIRO</b> y <b>AVANCE</b>.</p></div>
+          <div class="card doc-card" style="order:4;"><h3>Calibraciones</h3><p>Avance 0.15 m/s · giro 0.06 m/s + 0.60 rad/s · giro objetivo 90° · distancia ×0.9474 · yaw ×0.9899.</p></div>
+        </div>
+        <div class="doc-stack">
+          <div class="card doc-card"><h3>Qué usa</h3>
+            <table>
+              <tr><th>Entrada</th><th>Uso en la ruta</th></tr>
+              <tr><td><code>/odom_raw</code></td><td>Medir cada distancia y cerrar giros</td></tr>
+              <tr><td><code>/scan</code></td><td>Seguir pared y evitar colisiones</td></tr>
+              <tr><td><code>/verde_detectado</code></td><td>Finalizar el último tramo</td></tr>
+              <tr><td><code>/pare_detectado</code></td><td>Detenerse 5 s y continuar</td></tr>
+            </table>
+          </div>
+          <div class="card doc-card"><h3>Criterio de control</h3><p>El primer y último tramo siguen pared. Los dos tramos centrales avanzan por odometría. La anticolisión permanece activa durante todo el recorrido.</p></div>
+          <div class="card doc-card"><h3>Salida de BFS y control</h3><p>La ruta BFS se publica como celdas en <code>/maze/ruta_corta</code> y se pinta en amarillo. <code>/cmd_vel</code> envía <b>linear.x</b> y <b>angular.z</b>.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 13. MÉTRICAS ============ -->
+    <section class="slide" id="s-final-metrics">
+      <div class="slide-head">
+        <span class="eyebrow">13 · Métricas</span>
+        <h2>Cómo se evalúa cada recorrido</h2>
+        <p class="lead">El sistema acumula los resultados en ROS 2 y guarda una fila final en CSV.</p>
+      </div>
+      <div class="two-col">
+        <div class="doc-stack">
+          <div class="card doc-card"><h3>Datos medidos</h3><p><b>Tiempo:</b> desde INICIAR hasta META.<br><b>Longitud:</b> suma de desplazamientos de odometría.<br><b>Colisiones:</b> activaciones de recuperación.<br><b>PARE:</b> detectados y respetados.</p></div>
+          <div class="card doc-card"><h3>Calibración aplicada</h3><p>La distancia de <code>/odom_raw</code> se multiplica por <b>0.9474</b>. La longitud se publica en centímetros y el tiempo en segundos.</p></div>
+          <div class="card doc-card"><h3>Eficiencia</h3><p><code>eficiencia = 520 cm / longitud_recorrida</code><br>Una ruta más corta produce una eficiencia mayor.</p></div>
+        </div>
+        <div class="doc-stack">
+          <div class="card doc-card"><h3>Flujo de registro</h3><p><code>maze_solver.py</code> → <code>/maze/metricas</code> (JSON) → <code>metrics_logger.py</code> → <code>~/metricas_granprix.csv</code>.</p></div>
+          <div class="card doc-card table-wrap">
+            <h3>Columnas del CSV</h3>
+            <table>
+              <tr><th>Grupo</th><th>Campos</th></tr>
+              <tr><td>Identificación</td><td>ronda, fecha, llegó a meta</td></tr>
+              <tr><td>Rendimiento</td><td>tiempo, longitud real, óptima, eficiencia</td></tr>
+              <tr><td>Seguridad</td><td>colisiones y dead ends</td></tr>
+              <tr><td>Señales</td><td>PARE reales, detectados, respetados y falsos</td></tr>
+            </table>
+          </div>
+          <div class="card doc-card"><h3>Cuándo se guarda</h3><p>Al recibir <code>llego_meta=true</code>. Si se apaga antes, intenta conservar la última instantánea disponible.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 9. PROPIEDADES DEL ROBOT ============ -->
     <section class="slide" id="s-robot">
       <div class="slide-head">
-        <span class="eyebrow">03 · Plataforma</span>
+        <span class="eyebrow">09 · Plataforma</span>
         <h2>Yahboom ROSMASTER R2 — ficha técnica</h2>
         <p class="lead">Raspberry&nbsp;Pi&nbsp;5 + coprocesador ESP32-S3 (microROS), sobre ROS&nbsp;2&nbsp;Humble.</p>
       </div>
@@ -591,10 +897,10 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
       </div>
     </section>
 
-    <!-- ============ 3. DESCRIPCIÓN DEL RETO ============ -->
+    <!-- ============ 10. DESCRIPCIÓN DEL RETO ============ -->
     <section class="slide" id="s-challenge">
       <div class="slide-head">
-        <span class="eyebrow">04 · El reto</span>
+        <span class="eyebrow">10 · El reto</span>
         <h2>Un laberinto desconocido, dos intentos</h2>
       </div>
       <div class="two-col">
@@ -620,10 +926,10 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
       </div>
     </section>
 
-    <!-- ============ 4. SOLUCIÓN — OVERVIEW ============ -->
+    <!-- ============ 11. SOLUCIÓN — OVERVIEW ============ -->
     <section class="slide" id="s-solution">
       <div class="slide-head">
-        <span class="eyebrow">05 · Solución</span>
+        <span class="eyebrow">11 · Solución</span>
         <h2>Arquitectura en dos intentos</h2>
         <p class="lead">El intento 1 construye el grafo del laberinto celda por celda; el intento 2 lo recorre por el camino más corto, garantizado óptimo.</p>
       </div>
@@ -655,7 +961,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
     <!-- ============ 5. RECORRIDO 1 (interactive) ============ -->
     <section class="slide" id="s-run1">
       <div class="slide-head" style="gap:4px;">
-        <span class="eyebrow">06 · Solución — Recorrido 1</span>
+        <span class="eyebrow">10 · Solución — Recorrido 1</span>
         <h2>Exploración celda por celda (flood fill)</h2>
       </div>
       <div class="sim-layout" style="flex:1 1 auto; min-height:0;">
@@ -683,7 +989,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
     <!-- ============ 6. RECORRIDO 2 (interactive) ============ -->
     <section class="slide" id="s-run2">
       <div class="slide-head" style="gap:4px;">
-        <span class="eyebrow">07 · Solución — Recorrido 2</span>
+        <span class="eyebrow">11 · Solución — Recorrido 2</span>
         <h2>Speed run: BFS sobre el mapa ya conocido</h2>
       </div>
       <div class="sim-layout" style="flex:1 1 auto; min-height:0;">
@@ -711,7 +1017,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
     <!-- ============ 7. EVIDENCIAS ============ -->
     <section class="slide" id="s-evidence">
       <div class="slide-head">
-        <span class="eyebrow">08 · Evidencias</span>
+        <span class="eyebrow">12 · Evidencias</span>
         <h2>Pista física y corridas reales</h2>
         <p class="lead">Corridas reales sobre la pista física (promedios de varias corridas) y lo que arroja esta misma simulación.</p>
       </div>
@@ -794,7 +1100,7 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
     lb.classList.remove('open'); lbImg.src = '';
   }
   document.body.addEventListener('click', (e)=>{
-    const img = e.target.closest('.cover-photo img, .photo-card img, .evi-slot.filled img, .chart-card img, .modal-body .sd-photo');
+    const img = e.target.closest('.cover-photo img, .photo-card img, .doc-media img, .evi-slot.filled img, .chart-card img, .modal-body .sd-photo');
     if(img){ openLightbox(img.src, img.alt); return; }
     if(e.target === lb){ closeLightbox(); }
   });
@@ -1657,8 +1963,28 @@ const run2 = makeSimRunner({
 /* =========================================================================
    SLIDE NAVIGATION
    ========================================================================= */
+/* Se retiran solo las diapositivas generales repetidas. El cierre conserva
+   la demo y sus recorridos/evidencias originales, seguido por métricas. */
+['s-robot', 's-challenge', 's-solution', 's-final-metrics'].forEach(id => {
+  document.getElementById(id)?.remove();
+});
+const mapDemoSlide = document.getElementById('s-map');
+const bestRouteSlide = document.getElementById('s-best-route');
+const run1Slide = document.getElementById('s-run1');
+const run2Slide = document.getElementById('s-run2');
+const evidenceSlide = document.getElementById('s-evidence');
+bestRouteSlide.after(mapDemoSlide);
+mapDemoSlide.after(run1Slide);
+run1Slide.after(run2Slide);
+run2Slide.after(evidenceSlide);
+
 const slideEls = Array.from(document.querySelectorAll('.slide'));
-const titles = ['Carátula','Mapa','Propiedades del robot','Descripción del reto','Solución — Arquitectura','Recorrido 1 — Exploración','Recorrido 2 — Speed run','Evidencias'];
+const titles = [
+  'Carátula', 'Estructura del proyecto', 'Mapeo — Cámara y HSV',
+  'Mapeo — LiDAR', 'Mapeo — Construcción del mapa', 'Mapeo — Flujo de datos',
+  'Mapeo — Estados', 'Mejor ruta', 'Pista — Demo',
+  'Recorrido 1 — Exploración', 'Recorrido 2 — Speed run', 'Evidencias'
+];
 let current = -1;
 
 const dotsWrap = document.getElementById('nav-dots');
