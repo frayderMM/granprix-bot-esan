@@ -668,28 +668,49 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
       </div>
     </section>
 
-    <!-- ============ 6. MAPA COMPLETO ============ -->
-    <section class="slide" id="s-system-map">
+    <!-- ============ 5. CONSTRUCCION DEL MAPA ============ -->
+    <section class="slide" id="s-map-construction">
       <div class="slide-head">
-        <span class="eyebrow">05 · Sistema completo</span>
-        <h2>Cámara + LiDAR + odometría + mapa</h2>
-        <p class="lead">La web transforma la pista, los giros y la odometría en una vista común de 12×8 celdas.</p>
+        <span class="eyebrow">05 · Mapa</span>
+        <h2>Construcción y posición en el mapa</h2>
+        <p class="lead">La odometría se transforma a la grilla 12×8 y cada giro confirma un nuevo tramo.</p>
       </div>
       <div class="doc-layout wide-visual">
         <div class="doc-stack">
           <div class="card doc-card"><h3>1 · Sistema de coordenadas</h3><p>Grilla <b>12×8</b>, celda=<b>0.30 m</b> y origen visual en A8: <code>(0.5, 7.5)</code>. Los muros son segmentos <code>[x1,y1,x2,y2]</code>.</p></div>
           <div class="card doc-card"><h3>2 · Odometría → distancia</h3><p>Entre mensajes se calcula <code>paso=√(Δx²+Δy²)×0.9474</code>. El signo indica avance o retroceso.</p></div>
           <div class="card doc-card"><h3>3 · Distancia → posición del mapa</h3><p>Se obtiene el yaw relativo ×<b>0.9899</b> y el rumbo <code>(−sin(yaw),−cos(yaw))</code>. Luego: <code>posición += rumbo×paso/0.30</code>.</p></div>
-          <div class="card doc-card"><h3>4 · Cómo se pinta</h3><p>Durante el mapeo, cada giro físico confirma un vértice y revela el siguiente tramo en cian/azul. En la ruta final el icono usa la posición transformada de <code>/odom_raw</code>.</p></div>
+          <div class="card doc-card"><h3>4 · Cómo se pinta</h3><p>Cada giro físico confirma un vértice y revela el siguiente tramo. Las paredes se pintan en cian, las celdas recorridas en azul y el carrito en su posición transformada.</p></div>
         </div>
-        <figure class="doc-media"><img src="img/mapeolidarymapa.jpeg" alt="Visualizador con cámara, LiDAR y mapa completo"><figcaption>Panel real: cámara en vivo, LiDAR en marco robot y pista 12×8.</figcaption></figure>
+        <figure class="doc-media"><img src="img/mapa.jpeg" alt="Mapa de la pista dividido en una grilla de 12 por 8"><figcaption>Mapa base: grilla 12×8, paredes, inicio, orientación y meta.</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- ============ 6. SISTEMA COMPLETO ============ -->
+    <section class="slide" id="s-system-map">
+      <div class="slide-head">
+        <span class="eyebrow">06 · Sistema completo</span>
+        <h2>Cámara + LiDAR + odometría + mapa</h2>
+        <p class="lead">Resumen visual del sistema y del recorrido de los datos.</p>
+      </div>
+      <div class="doc-stack" style="flex:1 1 auto;">
+        <figure class="doc-media" style="flex:1 1 auto;"><img src="img/mapeolidarymapa.jpeg" alt="Visualizador con cámara, LiDAR y mapa completo"><figcaption>Panel real: cámara en vivo, LiDAR en marco robot y pista 12×8.</figcaption></figure>
+        <div class="card bfs-flow" aria-label="Resumen del flujo completo">
+          <div class="bfs-step"><b>SENSORES</b><span>Cámara · LiDAR · Odom · IMU</span></div><span class="bfs-arrow">→</span>
+          <div class="bfs-step"><b>PERCEPCIÓN</b><span>HSV · PARE/META · zonas LiDAR</span></div><span class="bfs-arrow">→</span>
+          <div class="bfs-step"><b>DECISIÓN</b><span>maze_solver · estados y ruta</span></div><span class="bfs-arrow">→</span>
+          <div class="bfs-step"><b>CARRITO</b><span>/cmd_vel · avance y giro</span></div><span class="bfs-arrow">→</span>
+          <div class="bfs-step"><b>ESTADO</b><span>/maze/estado · /robot_event</span></div><span class="bfs-arrow">→</span>
+          <div class="bfs-step"><b>VISUALIZACIÓN</b><span>visualizador_web · JSON</span></div><span class="bfs-arrow">→</span>
+          <div class="bfs-step"><b>MÉTRICAS</b><span>metrics_logger · CSV</span></div>
+        </div>
       </div>
     </section>
 
     <!-- ============ 6. FLUJO DE DATOS ============ -->
     <section class="slide" id="s-data-flow">
       <div class="slide-head">
-        <span class="eyebrow">06 · Flujo de datos</span>
+        <span class="eyebrow">07 · Flujo de datos</span>
         <h2>Qué datos recibe y envía cada nodo</h2>
         <p class="lead">Cada flecha indica el contenido real que viaja por los tópicos ROS 2.</p>
       </div>
@@ -1965,7 +1986,7 @@ const run2 = makeSimRunner({
    ========================================================================= */
 /* Se retiran solo las diapositivas generales repetidas. El cierre conserva
    la demo y sus recorridos/evidencias originales, seguido por métricas. */
-['s-robot', 's-challenge', 's-solution', 's-final-metrics'].forEach(id => {
+['s-data-flow', 's-robot', 's-challenge', 's-solution', 's-final-metrics'].forEach(id => {
   document.getElementById(id)?.remove();
 });
 const mapDemoSlide = document.getElementById('s-map');
@@ -1981,7 +2002,7 @@ run2Slide.after(evidenceSlide);
 const slideEls = Array.from(document.querySelectorAll('.slide'));
 const titles = [
   'Carátula', 'Estructura del proyecto', 'Mapeo — Cámara y HSV',
-  'Mapeo — LiDAR', 'Mapeo — Construcción del mapa', 'Mapeo — Flujo de datos',
+  'Mapeo — LiDAR', 'Mapeo — Construcción del mapa', 'Sistema completo',
   'Mapeo — Estados', 'Mejor ruta', 'Pista — Demo',
   'Recorrido 1 — Exploración', 'Recorrido 2 — Speed run', 'Evidencias'
 ];
