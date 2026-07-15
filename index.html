@@ -824,19 +824,10 @@ td.num{ font-family:var(--font-display); font-variant-numeric:tabular-nums; text
           <div class="card doc-card" style="order:3;"><h3>Cómo se ejecuta</h3><p><code>ESPERA_RUTA → SEGUIR_RUTA</code>. El robot reproduce la salida de BFS alternando <b>GIRO</b> y <b>AVANCE</b>.</p></div>
           <div class="card doc-card" style="order:4;"><h3>Calibraciones</h3><p>Avance 0.15 m/s · giro 0.06 m/s + 0.60 rad/s · giro objetivo 90° · distancia ×0.9474 · yaw ×0.9899.</p></div>
         </div>
-        <div class="doc-stack">
-          <div class="card doc-card"><h3>Qué usa</h3>
-            <table>
-              <tr><th>Entrada</th><th>Uso en la ruta</th></tr>
-              <tr><td><code>/odom_raw</code></td><td>Medir cada distancia y cerrar giros</td></tr>
-              <tr><td><code>/scan</code></td><td>Seguir pared y evitar colisiones</td></tr>
-              <tr><td><code>/verde_detectado</code></td><td>Finalizar el último tramo</td></tr>
-              <tr><td><code>/pare_detectado</code></td><td>Detenerse 5 s y continuar</td></tr>
-            </table>
-          </div>
-          <div class="card doc-card"><h3>Criterio de control</h3><p>El primer y último tramo siguen pared. Los dos tramos centrales avanzan por odometría. La anticolisión permanece activa durante todo el recorrido.</p></div>
-          <div class="card doc-card"><h3>Salida de BFS y control</h3><p>La ruta BFS se publica como celdas en <code>/maze/ruta_corta</code> y se pinta en amarillo. <code>/cmd_vel</code> envía <b>linear.x</b> y <b>angular.z</b>.</p></div>
-        </div>
+        <figure class="doc-media">
+          <img src="img/rutamascorta.png" alt="Ruta más corta calculada con BFS, pintada en amarillo hasta la meta">
+          <figcaption>Resultado final: ruta BFS en amarillo, eventos PARE, META y carrito en el punto de llegada.</figcaption>
+        </figure>
       </div>
     </section>
 
